@@ -1,4 +1,5 @@
 import React from "react";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
   title: 'Söz Yazma Sürəti Ölçücü',
@@ -12,7 +13,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="az">
-      <body>{children}</body>
+      <body>
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
