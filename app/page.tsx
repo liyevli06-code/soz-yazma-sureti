@@ -1,17 +1,16 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 
-const WORDS = ["kitab", "kompüter", "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", "dünya", "gələcək", "elm"];
+const WORDS = ["kitab", "kompüter", "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", "dünya", "gələcək", "elm", "məqsəd", "həyat", "tələbə", "müəllim", "vaxt", "saniyə", "dəqiqə", "klaviş"];
 
 export default function TypingTest() {
   const [userInput, setUserInput] = useState('')
   const [wordList, setWordList] = useState<string[]>([])
   const [timeLeft, setTimeLeft] = useState(60)
   const [isActive, setIsActive] = useState(false)
-  const [correctChars, setCorrectChars] = useState(0)
   const [testEnded, setTestEnded] = useState(false)
+  const [stats, setStats] = useState({ correct: 0, wrong: 0 })
 
-  // Sözləri qarışdırıb siyahı yaratmaq
   useEffect(() => {
     const shuffled = [...WORDS].sort(() => Math.random() - 0.5);
     setWordList(shuffled);
@@ -24,82 +23,76 @@ export default function TypingTest() {
     } else if (timeLeft === 0) {
       setIsActive(false);
       setTestEnded(true);
+      calculateStats();
       clearInterval(interval);
     }
     return () => clearInterval(interval);
   }, [isActive, timeLeft]);
 
-  const targetText = wordList.join(' ');
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isActive && !testEnded) setIsActive(true);
-    const value = e.target.value;
-    setUserInput(value);
-
-    // Düzgün yazılan hərfləri hesabla
+  const calculateStats = () => {
+    const userWords = userInput.trim().split(/\s+/);
+    const targetWords = wordList;
     let correct = 0;
-    for (let i = 0; i < value.length; i++) {
-      if (value[i] === targetText[i]) correct++;
-    }
-    setCorrectChars(correct);
+    let wrong = 0;
+
+    userWords.forEach((word, index) => {
+      if (word === targetWords[index]) {
+        correct++;
+      } else {
+        wrong++;
+      }
+    });
+    setStats({ correct, wrong });
   };
+
+  const targetText = wordList.join(' ');
 
   return (
     <div style={{ padding: '40px', maxWidth: '800px', margin: '0 auto', fontFamily: 'monospace', textAlign: 'center' }}>
       <h1>Söz Yazma Sürəti</h1>
       
-      {/* Sözlərin göründüyü hissə */}
       <div style={{ 
-        background: '#fff', 
-        padding: '20px', 
-        borderRadius: '10px', 
-        border: '1px solid #ddd',
-        marginBottom: '20px', 
-        fontSize: '24px',
-        lineHeight: '35px',
-        textAlign: 'left',
-        position: 'relative',
-        minHeight: '100px',
-        wordBreak: 'break-all'
+        background: '#fff', padding: '20px', borderRadius: '10px', border: '1px solid #ddd',
+        marginBottom: '20px', fontSize: '24px', lineHeight: '35px', textAlign: 'left', minHeight: '150px', wordBreak: 'break-word'
       }}>
-        {/* Altda boz rəngdə orijinal mətn */}
         <div style={{ color: '#ccc' }}>
           {targetText.split('').map((char, index) => {
-            let color = '#ccc'; // hələ yazılmayanlar
+            let color = '#ccc';
             if (index < userInput.length) {
-              color = userInput[index] === char ? '#2ecc71' : '#e74c3c'; // yaşıl və ya qırmızı
+              color = userInput[index] === char ? '#2ecc71' : '#e74c3c';
             }
-            return <span key={index} style={{ color }}>{char}</span>;
+            return <span key={index} style={{ color, textDecoration: color === '#e74c3c' ? 'underline' : 'none' }}>{char}</span>;
           })}
         </div>
       </div>
 
       <input
         type="text"
-        style={{ 
-          width: '100%', 
-          padding: '15px', 
-          fontSize: '18px', 
-          borderRadius: '5px', 
-          border: '2px solid #0070f3',
-          outline: 'none'
-        }}
+        style={{ width: '100%', padding: '15px', fontSize: '18px', borderRadius: '5px', border: '2px solid #0070f3', outline: 'none' }}
         value={userInput}
-        onChange={handleChange}
+        onChange={(e) => {
+          if (!isActive && !testEnded) setIsActive(true);
+          setUserInput(e.target.value);
+        }}
         disabled={testEnded}
         placeholder="Yazmağa başlayın..."
         autoFocus
       />
 
-      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-around', fontSize: '20px' }}>
-        <div>Vaxt: <b>{timeLeft}s</b></div>
-        {testEnded && <div>Sürət: <b>{Math.round((correctChars / 5))} S/D</b></div>}
-      </div>
+      <div style={{ marginTop: '20px', fontSize: '20px' }}>Vaxt: <b>{timeLeft}s</b></div>
 
-      <button 
-        onClick={() => window.location.reload()}
-        style={{ marginTop: '30px', padding: '10px 25px', backgroundColor: '#0070f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-      >
+      {testEnded && (
+        <div style={{ marginTop: '20px', padding: '20px', background: '#fdfdfd', borderRadius: '10px', border: '1px solid #0070f3' }}>
+          <h2>Nəticə:</h2>
+          <div style={{ display: 'flex', justifyContent: 'space-around', fontSize: '22px' }}>
+            <p style={{ color: 'green' }}>Düzgün: <b>{stats.correct}</b></p>
+            <p style={{ color: 'red' }}>Səhv: <b>{stats.wrong}</b></p>
+          </div>
+          <p style={{ fontSize: '24px', fontWeight: 'bold' }}>Xalis Sürət: {stats.correct} söz/dəqiqə</p>
+        </div>
+      )}
+
+      <button onClick={() => window.location.reload()} style={{ marginTop: '20px', padding: '10px 25px', background: '#0070f3', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>
         Yenidən Başla
       </button>
     </div>
