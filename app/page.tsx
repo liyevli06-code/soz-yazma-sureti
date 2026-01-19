@@ -1,15 +1,28 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 
-const EASY_WORDS = ["məkan", "zaman", "şəhər", "qələm", "dəftər", "bilik", "sevgi", "vətən", "bayraq", "səma", "dəniz", "yağış", "günəş", "bulud", "bahar", "çiçək", "meyvə", "səhər", "axşam", "gecə", "insan", "ailə", "dost", "yoldaş", "hərf", "cümlə", "mətn", "səhifə", "kitabxana", "lüğət", "mədəniyyət", "iqtisadiyyat", "ədəbiyyat", "riyaziyyat", "müstəqillik", "demokratiya", "respublika", "təhlükəsizlik", "əməkdaşlıq", "yaradıcılıq", "təşəbbüs", "müasirlik", "gənclik", "təcrübə", "müvəffəqiyyət","kitab", "universitet", "düşüncə", "fəaliyyət", "sayt", "server", "imtahan", "kompüter", "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", "dünya", "gələcək", "elm", "məqsəd", "həyat", "tələbə", "müəllim", "vaxt", "saniyə", "dəqiqə", "klaviş"];
+const EASY_WORDS = [
+  "kitab", "universitet", "düşüncə", "fəaliyyət", "sayt", "server", "imtahan", "kompüter", 
+  "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", 
+  "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", 
+  "dünya", "gələcək", "elm", "məqsəd", "həyat", "tələbə", "müəllim", "vaxt", "saniyə", 
+  "dəqiqə", "klaviş", "məkan", "zaman", "şəhər", "qələm", "dəftər", "bilik", "sevgi", 
+  "vətən", "bayraq", "səma", "dəniz", "yağış", "günəş", "bulud", "bahar", "çiçək", 
+  "meyvə", "səhər", "axşam", "gecə", "insan", "ailə", "dost", "yoldaş", "hərf", 
+  "cümlə", "mətn", "səhifə", "kitabxana", "lüğət", "mədəniyyət", "iqtisadiyyat", 
+  "ədəbiyyat", "riyaziyyat", "müstəqillik", "demokratiya", "respublika", 
+  "təhlükəsizlik", "əməkdaşlıq", "yaradıcılıq", "təşəbbüs", "müasirlik", "gənclik", 
+  "təcrübə", "müvəffəqiyyət"
+];
+
 const HARD_WORDS = [
   "müvəffəqiyyətsizliklərimizdən", "elektroenergetika", "proqramlaşdırılma", "təkmilləşdirilməyən", 
   "istiqamətləndiricilər", "fərdiləşdirilməmiş", "beynəlxalqlaşdırılma", "məsuliyyətsizlik", 
   "xarakterizəolunma", "mərkəzləşdirilməmiş", "sənayeləşdirilmə", "universitetlərarası", 
   "mükəmməlləşdirilmə", "mütəşəkkilləşdirilmiş", "sabitləşdiricilər", "radioteleviziya", 
   "hüquqşünaslıq", "elektromaqnit", "demokratikləşdirilmə", "avtomatlaşdırılma", 
-  "konseptuallaşdırma", "mikrobiologiya", "kristallaşdırılma", "transformasiya", "differensiallaşma",
-  "mütəxəssisləşdirilmə", "standartlaşdırılma" // Yeni əlavə etdiyim çətin sözlər
+  "konseptuallaşdırma", "mikrobiologiya", "kristallaşdırılma", "transformasiya", 
+  "differensiallaşma", "mütəxəssisləşdirilmə", "standartlaşdırılma"
 ];
 
 export default function TypingTest() {
@@ -20,16 +33,19 @@ export default function TypingTest() {
   const [isActive, setIsActive] = useState(false)
   const [testEnded, setTestEnded] = useState(false)
 
-  // Sözləri rejimlərə görə hazırlamaq
   useEffect(() => {
     const source = mode === 'easy' ? EASY_WORDS : HARD_WORDS;
     const shuffled = [...source].sort(() => Math.random() - 0.5);
     setWordList(shuffled);
+    resetTest();
+  }, [mode])
+
+  const resetTest = () => {
     setUserInput('');
     setTimeLeft(60);
     setIsActive(false);
     setTestEnded(false);
-  }, [mode])
+  }
 
   useEffect(() => {
     let interval: any = null;
@@ -47,7 +63,6 @@ export default function TypingTest() {
     const userWords = userInput.trim().split(/\s+/);
     let correct = 0;
     let wrong = 0;
-
     userWords.forEach((word, index) => {
       if (word === wordList[index]) correct++;
       else if (word !== "") wrong++;
@@ -56,71 +71,92 @@ export default function TypingTest() {
   };
 
   const { correct, wrong } = calculateResults();
-  const targetText = wordList.join(' ');
 
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
-      <h1>Yazma Testi</h1>
+    <div style={{ 
+      padding: '40px 20px', maxWidth: '900px', margin: '0 auto', 
+      textAlign: 'center', fontFamily: 'system-ui, -apple-system, sans-serif' 
+    }}>
+      <h1 style={{ color: '#1a202c', marginBottom: '30px' }}>Azərbaycanca Yazma Testi</h1>
 
-      {/* Rejim seçimi düymələri */}
-      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
-        <button 
-          onClick={() => setMode('easy')}
-          style={{
-            padding: '10px 20px', borderRadius: '5px', cursor: 'pointer',
-            backgroundColor: mode === 'easy' ? '#2ecc71' : '#eee',
-            color: mode === 'easy' ? 'white' : 'black', border: 'none'
-          }}
-        >Asan Rejim</button>
-        <button 
-          onClick={() => setMode('hard')}
-          style={{
-            padding: '10px 20px', borderRadius: '5px', cursor: 'pointer',
-            backgroundColor: mode === 'hard' ? '#e74c3c' : '#eee',
-            color: mode === 'hard' ? 'white' : 'black', border: 'none'
-          }}
-        >Çətin Rejim (Uzun Sözlər)</button>
+      {/* Rejim Seçimi */}
+      <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
+        <button onClick={() => setMode('easy')} style={{
+          padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold',
+          backgroundColor: mode === 'easy' ? '#48bb78' : '#edf2f7',
+          color: mode === 'easy' ? 'white' : '#4a5568', transition: '0.3s'
+        }}>Asan Rejim</button>
+        <button onClick={() => setMode('hard')} style={{
+          padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold',
+          backgroundColor: mode === 'hard' ? '#f56565' : '#edf2f7',
+          color: mode === 'hard' ? 'white' : '#4a5568', transition: '0.3s'
+        }}>Çətin Rejim (Uzun Sözlər)</button>
       </div>
       
+      {/* Söz Qutusu - Daha geniş və oxunaqlı */}
       <div style={{ 
-        background: '#f9f9f9', padding: '20px', borderRadius: '10px', border: '1px solid #ddd',
-        marginBottom: '20px', fontSize: mode === 'hard' ? '18px' : '22px', textAlign: 'left', height: '180px', overflowY: 'auto'
+        background: '#ffffff', padding: '30px', borderRadius: '15px', border: '2px solid #e2e8f0',
+        marginBottom: '25px', fontSize: '24px', textAlign: 'left', minHeight: '140px', 
+        lineHeight: '1.8', letterSpacing: '0.5px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
       }}>
-        {targetText.split('').map((char, index) => {
-          let color = '#ccc';
-          if (index < userInput.length) {
-            color = userInput[index] === char ? '#2ecc71' : '#e74c3c';
-          }
-          return <span key={index} style={{ color, backgroundColor: index === userInput.length ? '#d1e7ff' : 'transparent' }}>{char}</span>;
-        })}
+        <div style={{ color: '#a0aec0' }}>
+          {wordList.join(' ').split('').map((char, index) => {
+            let color = '#a0aec0';
+            let bg = 'transparent';
+            if (index < userInput.length) {
+              color = userInput[index] === char ? '#38a169' : '#e53e3e';
+            } else if (index === userInput.length) {
+              bg = '#ebf8ff';
+              color = '#2b6cb0';
+            }
+            return <span key={index} style={{ color, backgroundColor: bg, padding: '1px 0', borderRadius: '2px' }}>{char}</span>;
+          })}
+        </div>
       </div>
 
       <input
         type="text"
-        style={{ width: '100%', padding: '15px', fontSize: '18px', borderRadius: '8px', border: '2px solid #0070f3' }}
+        style={{ 
+          width: '100%', padding: '18px', fontSize: '20px', borderRadius: '12px', 
+          border: '2px solid #3182ce', outline: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}
         value={userInput}
         onChange={(e) => {
           if (!isActive && !testEnded) setIsActive(true);
           setUserInput(e.target.value);
         }}
         disabled={testEnded}
-        placeholder={mode === 'hard' ? "Diqqətli olun, sözlər çox uzundur!" : "Yazmağa başlayın..."}
+        placeholder="Yazmağa başlayın..."
       />
 
-      <div style={{ marginTop: '20px', fontSize: '20px' }}>Vaxt: <b style={{color: timeLeft < 10 ? 'red' : 'black'}}>{timeLeft}s</b></div>
+      <div style={{ marginTop: '25px', fontSize: '22px', fontWeight: 'bold' }}>
+        Vaxt: <span style={{color: timeLeft < 10 ? '#e53e3e' : '#2d3748'}}>{timeLeft}s</span>
+      </div>
 
       {testEnded && (
-        <div style={{ marginTop: '20px', padding: '20px', border: '2px solid #0070f3', borderRadius: '10px', backgroundColor: '#f0f7ff' }}>
-          <h3>Test Bitdi! ({mode === 'easy' ? 'Asan' : 'Çətin'} Rejim)</h3>
-          <p>Düzgün: <b style={{color: 'green'}}>{correct}</b></p>
-          <p>Səhv: <b style={{color: 'red'}}>{wrong}</b></p>
-          <p>Xalis Sürət: <b>{correct} söz/dəq</b></p>
+        <div style={{ 
+          marginTop: '30px', padding: '25px', border: '2px solid #3182ce', 
+          borderRadius: '15px', backgroundColor: '#ebf8ff', animation: 'fadeIn 0.5s'
+        }}>
+          <h2 style={{ color: '#2b6cb0', marginTop: 0 }}>Nəticəniz</h2>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', fontSize: '20px' }}>
+            <p>Düzgün: <b style={{color: '#38a169'}}>{correct}</b></p>
+            <p>Səhv: <b style={{color: '#e53e3e'}}>{wrong}</b></p>
+            <p>Sürət: <b>{correct} wpm</b></p>
+          </div>
+          <h3 style={{ color: '#2d3748' }}>
+            Səviyyə: {
+              correct < 20 ? "Zəif (🐢)" :
+              correct < 40 ? "Orta (🏃)" :
+              correct < 60 ? "Yaxşı (⚡)" : "Mükəmməl (🔥)"
+            }
+          </h3>
+          <button onClick={() => resetTest()} style={{
+            marginTop: '15px', padding: '10px 20px', background: '#3182ce', 
+            color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer'
+          }}>Yenidən Başla</button>
         </div>
       )}
-
-      <button onClick={() => window.location.reload()} style={{ marginTop: '20px', padding: '10px 25px', cursor: 'pointer', background: '#333', color: 'white', borderRadius: '5px', border: 'none' }}>
-        Yenidən Başla
-      </button>
     </div>
   )
 }
