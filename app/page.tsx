@@ -1,52 +1,84 @@
 'use client'
+import React, { useState, useEffect } from 'react'
 
-import React, { useState } from 'react'
-
-export default function Page() {
+export default function Home() {
+  const [mode, setMode] = useState<'test' | 'shooter'>('test')
   const [input, setInput] = useState('')
   const [score, setScore] = useState(0)
-  const [mode, setMode] = useState('test')
+  const [enemies, setEnemies] = useState<{ id: number; word: string; y: number; x: number }[]>([])
+  const [gameOver, setGameOver] = useState(false)
 
-  const word = "Azərbaycan"
+  const words = ["kitab", "kod", "ekran", "sürət", "uğur", "bilgi", "hədəf"]
 
-  const checkInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setInput(value)
-    if (value.trim() === word) {
-      setScore(score + 1)
-      setInput('')
+  // Qırıcı Oyunu Mexanikası
+  useEffect(() => {
+    if (mode === 'shooter' && !gameOver) {
+      const interval = setInterval(() => {
+        setEnemies(prev => {
+          const moved = prev.map(e => ({ ...e, y: e.y + 2 }))
+          if (moved.some(e => e.y > 90)) setGameOver(true)
+          return moved
+        })
+      }, 100)
+      
+      const spawn = setInterval(() => {
+        const newEnemy = {
+          id: Date.now(),
+          word: words[Math.floor(Math.random() * words.length)],
+          x: Math.random() * 80 + 10,
+          y: 0
+        }
+        setEnemies(prev => [...prev, newEnemy])
+      }, 2000)
+
+      return () => { clearInterval(interval); clearInterval(spawn) }
+    }
+  }, [mode, gameOver])
+
+  const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value.trim()
+    setInput(e.target.value)
+    if (mode === 'shooter') {
+      const hit = enemies.find(en => en.word === val)
+      if (hit) {
+        setEnemies(prev => prev.filter(en => en.id !== hit.id))
+        setScore(s => s + 10)
+        setInput('')
+      }
     }
   }
 
   return (
-    <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-      <h1>Yazma Oyunu 🚀</h1>
-      
+    <div style={{ padding: '20px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+      <h1>Yazma Dünyası 🚀</h1>
       <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => setMode('test')} style={{ padding: '10px', marginRight: '10px' }}>Test</button>
-        <button onClick={() => setMode('shooter')} style={{ padding: '10px' }}>Qırıcı</button>
+        <button onClick={() => {setMode('test'); setGameOver(false)}} style={{ padding: '10px', marginRight: '10px' }}>Test</button>
+        <button onClick={() => {setMode('shooter'); setGameOver(false); setEnemies([]); setScore(0)}} style={{ padding: '10px', background: 'red', color: 'white', border: 'none' }}>Qırıcı Oyunu</button>
       </div>
 
-      <div style={{ border: '2px solid #3182ce', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
-        {mode === 'test' ? (
-          <div>
-            <h2>Sözü yaz: <span style={{ color: 'blue' }}>{word}</span></h2>
-            <p>Xal: {score}</p>
-          </div>
-        ) : (
-          <div>
-            <h2 style={{ color: 'red' }}>Qırıcı Rejimi</h2>
-            <p>Çox yaxında əlavə olunacaq!</p>
-          </div>
-        )}
-      </div>
+      {mode === 'shooter' ? (
+        <div style={{ position: 'relative', height: '400px', background: '#222', borderRadius: '10px', overflow: 'hidden' }}>
+          {gameOver ? <h2 style={{ color: 'white', paddingTop: '150px' }}>OYUN BİTDİ! Xal: {score}</h2> : (
+            enemies.map(en => (
+              <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: 'white', padding: '5px', borderRadius: '5px', fontWeight: 'bold' }}>
+                {en.word}
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div style={{ padding: '40px', background: '#f0f0f0', borderRadius: '10px' }}>
+          <h2>Test Rejimi Aktivdir</h2>
+          <p>Yazma bacarığını yoxla!</p>
+        </div>
+      )}
 
       <input 
         type="text" 
         value={input} 
-        onChange={checkInput} 
-        placeholder="Bura yazın..."
-        style={{ padding: '10px', width: '250px', fontSize: '18px' }}
+        onChange={handleInput} 
+        placeholder="Sözü yazın..." 
+        style={{ marginTop: '20px', padding: '10px', width: '250px' }}
       />
     </div>
   )
