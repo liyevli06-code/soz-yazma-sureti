@@ -1,5 +1,5 @@
 'use client'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 const EASY_WORDS = [
   "kitab", "universitet", "düşüncə", "fəaliyyət", "sayt", "server", "imtahan", "kompüter", 
@@ -32,6 +32,7 @@ export default function TypingTest() {
   const [timeLeft, setTimeLeft] = useState(60)
   const [isActive, setIsActive] = useState(false)
   const [testEnded, setTestEnded] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const source = mode === 'easy' ? EASY_WORDS : HARD_WORDS;
@@ -46,6 +47,16 @@ export default function TypingTest() {
     setIsActive(false);
     setTestEnded(false);
   }
+
+  // Avtomatik aşağı sürüşmə funksiyası
+  useEffect(() => {
+    if (scrollRef.current) {
+      const activeChar = scrollRef.current.querySelector('.active-char');
+      if (activeChar) {
+        activeChar.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [userInput]);
 
   useEffect(() => {
     let interval: any = null;
@@ -73,90 +84,24 @@ export default function TypingTest() {
   const { correct, wrong } = calculateResults();
 
   return (
-    <div style={{ 
-      padding: '40px 20px', maxWidth: '900px', margin: '0 auto', 
-      textAlign: 'center', fontFamily: 'system-ui, -apple-system, sans-serif' 
-    }}>
-      <h1 style={{ color: '#1a202c', marginBottom: '30px' }}>Azərbaycanca Yazma Testi</h1>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center', fontFamily: 'system-ui' }}>
+      <h2 style={{ marginBottom: '20px' }}>Yazma Testi</h2>
 
-      {/* Rejim Seçimi */}
-      <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'center', gap: '15px' }}>
-        <button onClick={() => setMode('easy')} style={{
-          padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold',
-          backgroundColor: mode === 'easy' ? '#48bb78' : '#edf2f7',
-          color: mode === 'easy' ? 'white' : '#4a5568', transition: '0.3s'
-        }}>Asan Rejim</button>
-        <button onClick={() => setMode('hard')} style={{
-          padding: '12px 24px', borderRadius: '8px', cursor: 'pointer', border: 'none', fontWeight: 'bold',
-          backgroundColor: mode === 'hard' ? '#f56565' : '#edf2f7',
-          color: mode === 'hard' ? 'white' : '#4a5568', transition: '0.3s'
-        }}>Çətin Rejim (Uzun Sözlər)</button>
+      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+        <button onClick={() => setMode('easy')} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: mode === 'easy' ? '#48bb78' : '#edf2f7', color: mode === 'easy' ? 'white' : 'black' }}>Asan</button>
+        <button onClick={() => setMode('hard')} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: mode === 'hard' ? '#f56565' : '#edf2f7', color: mode === 'hard' ? 'white' : 'black' }}>Çətin</button>
       </div>
       
-      {/* Söz Qutusu - Daha geniş və oxunaqlı */}
-      <div style={{ 
-        background: '#ffffff', padding: '30px', borderRadius: '15px', border: '2px solid #e2e8f0',
-        marginBottom: '25px', fontSize: '24px', textAlign: 'left', minHeight: '140px', 
-        lineHeight: '1.8', letterSpacing: '0.5px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-      }}>
-        <div style={{ color: '#a0aec0' }}>
-          {wordList.join(' ').split('').map((char, index) => {
-            let color = '#a0aec0';
-            let bg = 'transparent';
-            if (index < userInput.length) {
-              color = userInput[index] === char ? '#38a169' : '#e53e3e';
-            } else if (index === userInput.length) {
-              bg = '#ebf8ff';
-              color = '#2b6cb0';
-            }
-            return <span key={index} style={{ color, backgroundColor: bg, padding: '1px 0', borderRadius: '2px' }}>{char}</span>;
-          })}
-        </div>
-      </div>
-
-      <input
-        type="text"
+      {/* 3 SƏTİRLİK SABİT QUTU */}
+      <div 
+        ref={scrollRef}
         style={{ 
-          width: '100%', padding: '18px', fontSize: '20px', borderRadius: '12px', 
-          border: '2px solid #3182ce', outline: 'none', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          background: '#fff', padding: '15px 25px', borderRadius: '12px', border: '2px solid #e2e8f0',
+          marginBottom: '20px', fontSize: '24px', textAlign: 'left', 
+          height: '110px', // Təxminən 3 sətir hündürlüyü
+          overflow: 'hidden', // Artıq sözləri gizlədir
+          lineHeight: '1.5', position: 'relative'
         }}
-        value={userInput}
-        onChange={(e) => {
-          if (!isActive && !testEnded) setIsActive(true);
-          setUserInput(e.target.value);
-        }}
-        disabled={testEnded}
-        placeholder="Yazmağa başlayın..."
-      />
-
-      <div style={{ marginTop: '25px', fontSize: '22px', fontWeight: 'bold' }}>
-        Vaxt: <span style={{color: timeLeft < 10 ? '#e53e3e' : '#2d3748'}}>{timeLeft}s</span>
-      </div>
-
-      {testEnded && (
-        <div style={{ 
-          marginTop: '30px', padding: '25px', border: '2px solid #3182ce', 
-          borderRadius: '15px', backgroundColor: '#ebf8ff', animation: 'fadeIn 0.5s'
-        }}>
-          <h2 style={{ color: '#2b6cb0', marginTop: 0 }}>Nəticəniz</h2>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '30px', fontSize: '20px' }}>
-            <p>Düzgün: <b style={{color: '#38a169'}}>{correct}</b></p>
-            <p>Səhv: <b style={{color: '#e53e3e'}}>{wrong}</b></p>
-            <p>Sürət: <b>{correct} wpm</b></p>
-          </div>
-          <h3 style={{ color: '#2d3748' }}>
-            Səviyyə: {
-              correct < 20 ? "Zəif (🐢)" :
-              correct < 40 ? "Orta (🏃)" :
-              correct < 60 ? "Yaxşı (⚡)" : "Mükəmməl (🔥)"
-            }
-          </h3>
-          <button onClick={() => resetTest()} style={{
-            marginTop: '15px', padding: '10px 20px', background: '#3182ce', 
-            color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer'
-          }}>Yenidən Başla</button>
-        </div>
-      )}
-    </div>
-  )
-}
+      >
+        <div style={{ color: '#a0aec0' }}>
+          {wordList.join(' ').split('').map
