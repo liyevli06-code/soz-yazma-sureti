@@ -1,7 +1,7 @@
 'use client'
 import React, { useState, useEffect } from 'react'
 
-const WORDS = ["kitab", "kompüter", "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", "dünya", "gələcək", "elm", "məqsəd", "həyat", "tələbə", "müəllim", "vaxt", "saniyə", "dəqiqə", "klaviş"];
+const WORDS = ["alqoritm", "şəbəkə", "universitet", "təcrübə", "layihə", "innovasiya", "məlumat", "sistem", "müstəqil", "səviyyə", "keyfiyyət", "səmərəli", "müasir", "interfeys", "tədqiqat", "məntiq", "analiz", "nəticə", "imkan", "fəaliyyət", "dəstək", "fürsət", "hərəkət", "qabiliyyət", "prosessor", "yaddaş", "platforma", "rəqəmsal", "sayt", "rabitə", "cihaz", "bulud", "təhlükəsizlik", "server", "müvəffəqiyyət", "fərdiləşdirmə", "istiqamətləndirmə", "təkmilləşdirmə", "vəzifəpərəstlik", "intizam", "öhdəlik", "yaradıcılıq", "düşüncə", "imtahan", "mühit", "pəncərə", "xarakterizə","kitab", "kompüter", "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", "dünya", "gələcək", "elm", "məqsəd", "həyat", "tələbə", "müəllim", "vaxt", "saniyə", "dəqiqə", "klaviş"];
 
 export default function TypingTest() {
   const [userInput, setUserInput] = useState('')
