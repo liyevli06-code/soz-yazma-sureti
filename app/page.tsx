@@ -1,126 +1,179 @@
 'use client'
-import React, { useState, useEffect } from 'react'
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue, update } from "firebase/database";
+import React, { useState, useEffect, useRef } from 'react'
 
-// Sənin Firebase məlumatların
-const firebaseConfig = {
-  apiKey: "AIzaSyBKWfGbarGZxK6a3Qi9F7JZ2kvfosj9_Rc",
-  authDomain: "soz-oyunu-e73ee.firebaseapp.com",
-  databaseURL: "https://soz-oyunu-e73ee-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "soz-oyunu-e73ee",
-  storageBucket: "soz-oyunu-e73ee.firebasestorage.app",
-  messagingSenderId: "376165752214",
-  appId: "1:376165752214:web:291a3a6e95e9011b3291b7",
-  measurementId: "G-G5GRXJ0DVZ"
-};
+const EASY_WORDS = ["kitab", "universitet", "düşüncə", "fəaliyyət", "sayt", "server", "imtahan", "kompüter", "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", "dünya", "gələcək", "elm", "məqsəd", "həyat", "tələbə", "müəllim", "vaxt", "saniyə", "dəqiqə", "klaviş", "məkan", "zaman", "şəhər", "qələm", "dəftər", "bilik", "sevgi", "vətən", "bayraq", "səma", "dəniz", "yağış", "günəş", "bulud", "bahar", "çiçək", "meyvə", "səhər", "axşam", "gecə", "insan", "ailə", "dost", "yoldaş", "hərf", "cümlə", "mətn", "səhifə", "kitabxana", "lüğət", "mədəniyyət", "iqtisadiyyat", "ədəbiyyat", "riyaziyyat", "müstəqillik", "demokratiya", "respublika", "təhlükəsizlik", "əməkdaşlıq", "yaradıcılıq", "təşəbbüs", "müasirlik", "gənclik", "təcrübə", "müvəffəqiyyət"];
+const HARD_WORDS = ["müvəffəqiyyətsizliklərimizdən", "elektroenergetika", "proqramlaşdırılma", "təkmilləşdirilməyən", "istiqamətləndiricilər", "fərdiləşdirilməmiş", "beynəlxalqlaşdırılma", "məsuliyyətsizlik", "xarakterizəolunma", "mərkəzləşdirilməmiş", "sənayeləşdirilmə", "universitetlərarası", "mükəmməlləşdirilmə", "mütəşəkkilləşdirilmiş", "sabitləşdiricilər", "radioteleviziya", "hüquqşünaslıq", "elektromaqnit", "demokratikləşdirilmə", "avtomatlaşdırılma", "konseptuallaşdırma", "mikrobiologiya", "kristallaşdırılma", "transformasiya", "differensiallaşma", "mütəxəssisləşdirilmə", "standartlaşdırılma"];
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-const WORDS = ["kitab", "universitet", "düşüncə", "fəaliyyət", "sayt", "server", "imtahan", "kompüter", "internet", "sürət", "Azərbaycan", "ekran", "kod", "tətbiq", "uğur", "hədəf", "elm", "vaxt", "şəhər", "bilik", "insan", "dost", "cümlə", "mətn"];
-
-export default function GlobalTypingApp() {
-  const [appMode, setAppMode] = useState<'easy' | 'online'>('easy');
+export default function TypingApp() {
+  // Rejim seçimi: 'easy', 'hard' (Yazma Testi) və ya 'shooter' (Qırıcı Oyunu)
+  const [appMode, setAppMode] = useState<'easy' | 'hard' | 'shooter'>('easy');
   const [userInput, setUserInput] = useState('');
   const [wordList, setWordList] = useState<string[]>([]);
-  const [playerRole, setPlayerRole] = useState<'p1' | 'p2' | null>(null);
-  const [gameState, setGameState] = useState<any>(null);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [isActive, setIsActive] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
+  
+  // Qırıcı Oyunu üçün state-lər
+  const [enemies, setEnemies] = useState<{ id: number, word: string, x: number, y: number }[]>([]);
+  const [score, setScore] = useState(0);
+  
+  const scrollRef = useRef<HTMLDivElement>(null);
 
+  // Rejim dəyişəndə sıfırla
   useEffect(() => {
-    if (appMode === 'easy') {
-      setWordList([...WORDS].sort(() => Math.random() - 0.5));
+    resetTest();
+    if (appMode !== 'shooter') {
+      const source = appMode === 'easy' ? EASY_WORDS : HARD_WORDS;
+      setWordList([...source].sort(() => Math.random() - 0.5));
     }
   }, [appMode]);
 
-  useEffect(() => {
-    if (appMode === 'online') {
-      const roomRef = ref(db, `rooms/global_room`);
-      return onValue(roomRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          setGameState(data);
-          if (data.p1_hp <= 0 || data.p2_hp <= 0) setTestEnded(true);
-        }
-      });
-    }
-  }, [appMode]);
-
-  const joinOnline = (role: 'p1' | 'p2') => {
-    setPlayerRole(role);
-    update(ref(db, `rooms/global_room`), {
-      [`${role}_hp`]: 100,
-      [`${role}_target`]: WORDS[Math.floor(Math.random() * WORDS.length)]
-    });
+  const resetTest = () => {
+    setUserInput('');
+    setTimeLeft(60);
+    setIsActive(false);
+    setTestEnded(false);
+    setEnemies([]);
+    setScore(0);
   };
 
+  // Yazma Testi üçün avtomatik sürüşmə
+  useEffect(() => {
+    if (appMode !== 'shooter' && scrollRef.current) {
+      const activeChar = scrollRef.current.querySelector('.active-char') as HTMLElement;
+      if (activeChar) {
+        scrollRef.current.scrollTop = activeChar.offsetTop - 40;
+      }
+    }
+  }, [userInput, appMode]);
+
+  // Taymer və Oyun Logikası
+  useEffect(() => {
+    let interval: any = null;
+    if (isActive && timeLeft > 0 && !testEnded) {
+      interval = setInterval(() => setTimeLeft((p) => p - 1), 1000);
+    } else if (timeLeft === 0) {
+      setIsActive(false);
+      setTestEnded(true);
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [isActive, timeLeft, testEnded]);
+
+  // Qırıcı Oyunu: Düşmənlərin hərəkəti və yaranması
+  useEffect(() => {
+    let moveInterval: any;
+    let spawnInterval: any;
+
+    if (appMode === 'shooter' && isActive && !testEnded) {
+      moveInterval = setInterval(() => {
+        setEnemies(prev => {
+          const updated = prev.map(e => ({ ...e, y: e.y + 1.5 }));
+          if (updated.some(e => e.y > 90)) {
+            setTestEnded(true);
+            setIsActive(false);
+          }
+          return updated;
+        });
+      }, 100);
+
+      spawnInterval = setInterval(() => {
+        setEnemies(prev => [...prev, {
+          id: Date.now(),
+          word: EASY_WORDS[Math.floor(Math.random() * EASY_WORDS.length)],
+          x: Math.random() * 80 + 5,
+          y: 0
+        }]);
+      }, 2000);
+    }
+
+    return () => {
+      clearInterval(moveInterval);
+      clearInterval(spawnInterval);
+    };
+  }, [appMode, isActive, testEnded]);
+
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isActive && !testEnded) setIsActive(true);
     const val = e.target.value;
     setUserInput(val);
 
-    if (appMode === 'online' && playerRole && !testEnded) {
-      const target = playerRole === 'p1' ? gameState?.p1_target : gameState?.p2_target;
-      if (val.trim() === target) {
-        const enemy = playerRole === 'p1' ? 'p2' : 'p1';
-        update(ref(db, `rooms/global_room`), {
-          [`${enemy}_hp`]: Math.max(0, (gameState[`${enemy}_hp`] || 100) - 10),
-          [`${playerRole}_target`]: WORDS[Math.floor(Math.random() * WORDS.length)]
-        });
+    // Qırıcı Oyunu vurma mexanikası
+    if (appMode === 'shooter') {
+      const hitEnemy = enemies.find(en => en.word === val.trim());
+      if (hitEnemy) {
+        setEnemies(prev => prev.filter(en => en.id !== hitEnemy.id));
+        setScore(s => s + 10);
         setUserInput('');
       }
     }
   };
 
+  const userWords = userInput.trim().split(/\s+/);
+  const correct = appMode === 'shooter' ? score : userWords.filter((w, i) => w === wordList[i]).length;
+  const wrong = appMode === 'shooter' ? 0 : userWords.filter((w, i) => w !== "" && w !== wordList[i]).length;
+
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
-      <h1>Yazma Dünyası 🚀</h1>
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => {setAppMode('easy'); setPlayerRole(null);}} style={{ padding: '10px', marginRight: '10px', background: appMode === 'easy' ? '#48bb78' : '#edf2f7' }}>Tək Nəfərlik</button>
-        <button onClick={() => setAppMode('online')} style={{ padding: '10px', background: appMode === 'online' ? '#805ad5' : '#edf2f7', color: appMode === 'online' ? 'white' : 'black' }}>Onlayn PvP ⚔️</button>
-      </div>
+      <h1>Azərbaycanca Yazma Dünyası 🚀</h1>
 
-      {appMode === 'online' ? (
-        !playerRole ? (
-          <div style={{ padding: '30px', background: '#f7fafc', borderRadius: '15px' }}>
-            <button onClick={() => joinOnline('p1')} style={{ padding: '15px', margin: '5px', background: '#3182ce', color: 'white' }}>Oyunçu 1 Ol</button>
-            <button onClick={() => joinOnline('p2')} style={{ padding: '15px', margin: '5px', background: '#e53e3e', color: 'white' }}>Oyunçu 2 Ol</button>
+      {/* REJİM SEÇİMİ DÜYMƏLƏRİ */}
+      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <button onClick={() => setAppMode('easy')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'easy' ? '#48bb78' : '#edf2f7', color: appMode === 'easy' ? 'white' : 'black' }}>Asan Test</button>
+        <button onClick={() => setAppMode('hard')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'hard' ? '#f56565' : '#edf2f7', color: appMode === 'hard' ? 'white' : 'black' }}>Çətin Test</button>
+        <button onClick={() => setAppMode('shooter')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'shooter' ? '#3182ce' : '#edf2f7', color: appMode === 'shooter' ? 'white' : 'black' }}>Qırıcı Oyunu 🚀</button>
+      </div>
+      
+      {/* OYUN VƏ TEST SAHƏSİ */}
+      <div style={{ position: 'relative' }}>
+        {appMode === 'shooter' ? (
+          <div style={{ position: 'relative', width: '100%', height: '400px', backgroundColor: '#1a202c', borderRadius: '15px', overflow: 'hidden', border: '3px solid #2d3748', marginBottom: '20px' }}>
+             {testEnded ? (
+               <div style={{ color: 'white', paddingTop: '150px' }}><h2>OYUN BİTDİ! ❌</h2><p>Xal: {score}</p></div>
+             ) : (
+               enemies.map(en => (
+                 <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: 'white', padding: '5px 12px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                   {en.word}
+                 </div>
+               ))
+             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-            <div style={{ flex: 1, padding: '15px', border: '2px solid #3182ce', borderRadius: '10px' }}>
-              <h3>P1 Can: {gameState?.p1_hp}%</h3>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{gameState?.p1_target}</div>
-            </div>
-            <div style={{ flex: 1, padding: '15px', border: '2px solid #e53e3e', borderRadius: '10px' }}>
-              <h3>P2 Can: {gameState?.p2_hp}%</h3>
-              <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{gameState?.p2_target}</div>
+          <div ref={scrollRef} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '20px', fontSize: '24px', textAlign: 'left', height: '110px', overflow: 'hidden', lineHeight: '1.6' }}>
+            <div style={{ color: '#cbd5e0' }}>
+              {wordList.join(' ').split('').map((char, index) => {
+                let color = '#cbd5e0';
+                let isCurrent = index === userInput.length;
+                if (index < userInput.length) {
+                  color = userInput[index] === char ? '#38a169' : '#e53e3e';
+                }
+                return <span key={index} className={isCurrent ? 'active-char' : ''} style={{ color, backgroundColor: isCurrent ? '#ebf8ff' : 'transparent', borderBottom: isCurrent ? '2px solid #3182ce' : 'none' }}>{char}</span>;
+              })}
             </div>
           </div>
-        )
-      ) : (
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '20px', fontSize: '22px', height: '80px', overflow: 'hidden' }}>
-          {wordList.join(' ').split('').map((char, index) => (
-            <span key={index} style={{ color: index < userInput.length ? (userInput[index] === char ? '#38a169' : '#e53e3e') : '#cbd5e0' }}>{char}</span>
-          ))}
-        </div>
-      )}
+        )}
+      </div>
 
       <input
         type="text"
-        style={{ width: '100%', padding: '12px', fontSize: '18px', borderRadius: '8px', border: '2px solid #3182ce' }}
+        style={{ width: '100%', padding: '15px', fontSize: '18px', borderRadius: '10px', border: '2px solid #3182ce', outline: 'none' }}
         value={userInput}
         onChange={handleInput}
-        placeholder="Yazmağa başlayın..."
         disabled={testEnded}
+        placeholder={appMode === 'shooter' ? "Sözü yaz və vur!" : "Yazmağa başlayın..."}
+        autoFocus
       />
 
+      <div style={{ marginTop: '15px', fontSize: '20px' }}>
+        Vaxt: <b>{timeLeft}s</b> | {appMode === 'shooter' ? `Xal: ${score}` : `Düz: ${correct} / Səhv: ${wrong}`}
+      </div>
+
       {testEnded && (
-        <div style={{ marginTop: '20px', padding: '20px', background: '#f0f9ff', borderRadius: '10px' }}>
-          <h2>Oyun Bitdi! 🏁</h2>
-          <button onClick={() => window.location.reload()} style={{ padding: '10px 20px', background: '#3182ce', color: 'white', cursor: 'pointer' }}>Yenidən Başla</button>
+        <div style={{ marginTop: '20px', padding: '20px', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #3182ce' }}>
+          <h3>Nəticə: {appMode === 'shooter' ? `${score} Xal` : `${correct} wpm`}</h3>
+          <button onClick={resetTest} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: '5px', border: 'none', background: '#3182ce', color: 'white' }}>Yenidən Başla</button>
         </div>
       )}
     </div>
-  );
+  )
 }
