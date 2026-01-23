@@ -1,10 +1,16 @@
 'use client'
 import React, { useState, useEffect, useRef } from 'react'
 import { db, rekordYaz } from '../lib/firebase'
-import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore'
+import { collection, query, orderBy, limit, onSnapshot, where, DocumentData } from 'firebase/firestore'
 
 const EASY_WORDS = ["kitab", "universitet", "düşüncə", "fəaliyyət", "sayt", "server", "imtahan", "kompüter", "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", "dünya", "gələcək", "elm", "məqsəd", "həyat", "tələbə", "müəllim", "vaxt", "saniyə", "dəqiqə", "klaviş", "məkan", "zaman", "şəhər", "qələm", "dəftər", "bilik", "sevgi", "vətən", "bayraq", "səma", "dəniz", "yağış", "günəş", "bulud", "bahar", "çiçək", "meyvə", "səhər", "axşam", "gecə", "insan", "ailə", "dost", "yoldaş", "hərf", "cümlə", "mətn", "səhifə", "kitabxana", "lüğət", "mədəniyyət", "iqtisadiyyat", "ədəbiyyat", "riyaziyyat", "müstəqillik", "demokratiya", "respublika", "təhlükəsizlik", "əməkdaşlıq", "yaradıcılıq", "təşəbbüs", "müasirlik", "gənclik", "təcrübə", "müvəffəqiyyət"];
 const HARD_WORDS = ["müvəffəqiyyətsizliklərimizdən", "elektroenergetika", "proqramlaşdırılma", "təkmilləşdirilməyən", "istiqamətləndiricilər", "fərdiləşdirilməmiş", "beynəlxalqlaşdırılma", "məsuliyyətsizlik", "xarakterizəolunma", "mərkəzləşdirilməmiş", "sənayeləşdirilmə", "universitetlərarası", "mükəmməlləşdirilmə", "mütəşəkkilləşdirilmiş", "sabitləşdiricilər", "radioteleviziya", "hüquqşünaslıq", "elektromaqnit", "demokratikləşdirilmə", "avtomatlaşdırılma", "konseptuallaşdırma", "mikrobiologiya", "kristallaşdırılma", "transformasiya", "differensiallaşma", "mütəxəssisləşdirilmə", "standartlaşdırılma"];
+
+interface Lider {
+  ad: string;
+  xal: number;
+  rejim: string;
+}
 
 export default function TypingApp() {
   const [appMode, setAppMode] = useState<'easy' | 'hard' | 'shooter'>('easy');
@@ -17,8 +23,7 @@ export default function TypingApp() {
   const [score, setScore] = useState(0);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Liderlər sırası üçün state-lər
-  const [liderler, setLiderler] = useState<any[]>([]);
+  const [liderler, setLiderler] = useState<Lider[]>([]);
   const [userName, setUserName] = useState("");
   const [isSaved, setIsSaved] = useState(false);
 
@@ -29,10 +34,11 @@ export default function TypingApp() {
       setWordList([...source].sort(() => Math.random() - 0.5));
     }
     
-    // Liderləri rejimə görə bazadan real-vaxtda çək
+    // Liderləri rejimə görə Firebase-dən real-vaxtda çək
     const q = query(collection(db, "liderler"), where("rejim", "==", appMode), orderBy("xal", "desc"), limit(5));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setLiderler(snapshot.docs.map(doc => doc.data()));
+      const data = snapshot.docs.map(doc => doc.data() as Lider);
+      setLiderler(data);
     });
     return () => unsubscribe();
   }, [appMode]);
@@ -55,20 +61,20 @@ export default function TypingApp() {
   }, [userInput, appMode]);
 
   useEffect(() => {
-    let interval: any = null;
+    let interval: NodeJS.Timeout | null = null;
     if (isActive && timeLeft > 0 && !testEnded) {
       interval = setInterval(() => setTimeLeft((p) => p - 1), 1000);
     } else if (timeLeft === 0) {
       setIsActive(false);
       setTestEnded(true);
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
     }
-    return () => clearInterval(interval);
+    return () => { if (interval) clearInterval(interval); };
   }, [isActive, timeLeft, testEnded]);
 
   useEffect(() => {
-    let moveInterval: any;
-    let spawnInterval: any;
+    let moveInterval: NodeJS.Timeout;
+    let spawnInterval: NodeJS.Timeout;
     if (appMode === 'shooter' && isActive && !testEnded) {
       moveInterval = setInterval(() => {
         setEnemies(prev => {
@@ -111,7 +117,6 @@ export default function TypingApp() {
     if (userName.trim()) {
       await rekordYaz(userName, correct, appMode);
       setIsSaved(true);
-      alert("Rekordunuz qeyd edildi!");
     }
   };
 
@@ -184,7 +189,6 @@ export default function TypingApp() {
         </div>
       )}
 
-      {/* LİDERLƏR CƏDVƏLİ */}
       <div style={{ marginTop: '40px', background: '#fff', padding: '20px', borderRadius: '15px', border: '1px solid #e2e8f0' }}>
         <h2 style={{ fontSize: '20px', color: '#2d3748', marginBottom: '15px' }}>🏆 {appMode.toUpperCase()} Rejimi Liderləri</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -193,7 +197,7 @@ export default function TypingApp() {
               <span><b>{i+1}.</b> {l.ad}</span>
               <span style={{ color: '#3182ce', fontWeight: 'bold' }}>{l.xal} {appMode === 'shooter' ? 'Xal' : 'wpm'}</span>
             </div>
-          )) : <p style={{ color: '#a0aec0' }}>Hələ rekord yoxdur. İlk sən ol!</p>}
+          )) : <p style={{ color: '#a0aec0' }}>Hələ rekord yoxdur.</p>}
         </div>
       </div>
     </div>
