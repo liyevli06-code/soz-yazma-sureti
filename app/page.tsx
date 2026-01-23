@@ -1,31 +1,40 @@
 'use client'
 import React, { useState, useEffect, useRef } from 'react'
+import { db, rekordYaz } from '../lib/firebase'
+import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore'
 
 const EASY_WORDS = ["kitab", "universitet", "düşüncə", "fəaliyyət", "sayt", "server", "imtahan", "kompüter", "proqramlaşdırma", "internet", "sürət", "klaviatura", "Azərbaycan", "texnologiya", "məktəb", "öyrənmək", "ekran", "siçan", "kod", "tətbiq", "uğur", "hədəf", "bilgi", "dünya", "gələcək", "elm", "məqsəd", "həyat", "tələbə", "müəllim", "vaxt", "saniyə", "dəqiqə", "klaviş", "məkan", "zaman", "şəhər", "qələm", "dəftər", "bilik", "sevgi", "vətən", "bayraq", "səma", "dəniz", "yağış", "günəş", "bulud", "bahar", "çiçək", "meyvə", "səhər", "axşam", "gecə", "insan", "ailə", "dost", "yoldaş", "hərf", "cümlə", "mətn", "səhifə", "kitabxana", "lüğət", "mədəniyyət", "iqtisadiyyat", "ədəbiyyat", "riyaziyyat", "müstəqillik", "demokratiya", "respublika", "təhlükəsizlik", "əməkdaşlıq", "yaradıcılıq", "təşəbbüs", "müasirlik", "gənclik", "təcrübə", "müvəffəqiyyət"];
 const HARD_WORDS = ["müvəffəqiyyətsizliklərimizdən", "elektroenergetika", "proqramlaşdırılma", "təkmilləşdirilməyən", "istiqamətləndiricilər", "fərdiləşdirilməmiş", "beynəlxalqlaşdırılma", "məsuliyyətsizlik", "xarakterizəolunma", "mərkəzləşdirilməmiş", "sənayeləşdirilmə", "universitetlərarası", "mükəmməlləşdirilmə", "mütəşəkkilləşdirilmiş", "sabitləşdiricilər", "radioteleviziya", "hüquqşünaslıq", "elektromaqnit", "demokratikləşdirilmə", "avtomatlaşdırılma", "konseptuallaşdırma", "mikrobiologiya", "kristallaşdırılma", "transformasiya", "differensiallaşma", "mütəxəssisləşdirilmə", "standartlaşdırılma"];
 
 export default function TypingApp() {
-  // Rejim seçimi: 'easy', 'hard' (Yazma Testi) və ya 'shooter' (Qırıcı Oyunu)
   const [appMode, setAppMode] = useState<'easy' | 'hard' | 'shooter'>('easy');
   const [userInput, setUserInput] = useState('');
   const [wordList, setWordList] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isActive, setIsActive] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
-  
-  // Qırıcı Oyunu üçün state-lər
   const [enemies, setEnemies] = useState<{ id: number, word: string, x: number, y: number }[]>([]);
   const [score, setScore] = useState(0);
-  
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Rejim dəyişəndə sıfırla
+  // Liderlər sırası üçün state-lər
+  const [liderler, setLiderler] = useState<any[]>([]);
+  const [userName, setUserName] = useState("");
+  const [isSaved, setIsSaved] = useState(false);
+
   useEffect(() => {
     resetTest();
     if (appMode !== 'shooter') {
       const source = appMode === 'easy' ? EASY_WORDS : HARD_WORDS;
       setWordList([...source].sort(() => Math.random() - 0.5));
     }
+    
+    // Liderləri rejimə görə bazadan real-vaxtda çək
+    const q = query(collection(db, "liderler"), where("rejim", "==", appMode), orderBy("xal", "desc"), limit(5));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setLiderler(snapshot.docs.map(doc => doc.data()));
+    });
+    return () => unsubscribe();
   }, [appMode]);
 
   const resetTest = () => {
@@ -35,19 +44,16 @@ export default function TypingApp() {
     setTestEnded(false);
     setEnemies([]);
     setScore(0);
+    setIsSaved(false);
   };
 
-  // Yazma Testi üçün avtomatik sürüşmə
   useEffect(() => {
     if (appMode !== 'shooter' && scrollRef.current) {
       const activeChar = scrollRef.current.querySelector('.active-char') as HTMLElement;
-      if (activeChar) {
-        scrollRef.current.scrollTop = activeChar.offsetTop - 40;
-      }
+      if (activeChar) scrollRef.current.scrollTop = activeChar.offsetTop - 40;
     }
   }, [userInput, appMode]);
 
-  // Taymer və Oyun Logikası
   useEffect(() => {
     let interval: any = null;
     if (isActive && timeLeft > 0 && !testEnded) {
@@ -60,23 +66,17 @@ export default function TypingApp() {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, testEnded]);
 
-  // Qırıcı Oyunu: Düşmənlərin hərəkəti və yaranması
   useEffect(() => {
     let moveInterval: any;
     let spawnInterval: any;
-
     if (appMode === 'shooter' && isActive && !testEnded) {
       moveInterval = setInterval(() => {
         setEnemies(prev => {
           const updated = prev.map(e => ({ ...e, y: e.y + 1.5 }));
-          if (updated.some(e => e.y > 90)) {
-            setTestEnded(true);
-            setIsActive(false);
-          }
+          if (updated.some(e => e.y > 90)) { setTestEnded(true); setIsActive(false); }
           return updated;
         });
       }, 100);
-
       spawnInterval = setInterval(() => {
         setEnemies(prev => [...prev, {
           id: Date.now(),
@@ -86,19 +86,13 @@ export default function TypingApp() {
         }]);
       }, 2000);
     }
-
-    return () => {
-      clearInterval(moveInterval);
-      clearInterval(spawnInterval);
-    };
+    return () => { clearInterval(moveInterval); clearInterval(spawnInterval); };
   }, [appMode, isActive, testEnded]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isActive && !testEnded) setIsActive(true);
     const val = e.target.value;
     setUserInput(val);
-
-    // Qırıcı Oyunu vurma mexanikası
     if (appMode === 'shooter') {
       const hitEnemy = enemies.find(en => en.word === val.trim());
       if (hitEnemy) {
@@ -113,18 +107,24 @@ export default function TypingApp() {
   const correct = appMode === 'shooter' ? score : userWords.filter((w, i) => w === wordList[i]).length;
   const wrong = appMode === 'shooter' ? 0 : userWords.filter((w, i) => w !== "" && w !== wordList[i]).length;
 
+  const handleSaveRecord = async () => {
+    if (userName.trim()) {
+      await rekordYaz(userName, correct, appMode);
+      setIsSaved(true);
+      alert("Rekordunuz qeyd edildi!");
+    }
+  };
+
   return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
+    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center', fontFamily: 'sans-serif', backgroundColor: '#f7fafc', minHeight: '100vh' }}>
       <h1>Azərbaycanca Yazma Dünyası 🚀</h1>
 
-      {/* REJİM SEÇİMİ DÜYMƏLƏRİ */}
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <button onClick={() => setAppMode('easy')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'easy' ? '#48bb78' : '#edf2f7', color: appMode === 'easy' ? 'white' : 'black' }}>Asan Test</button>
         <button onClick={() => setAppMode('hard')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'hard' ? '#f56565' : '#edf2f7', color: appMode === 'hard' ? 'white' : 'black' }}>Çətin Test</button>
         <button onClick={() => setAppMode('shooter')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'shooter' ? '#3182ce' : '#edf2f7', color: appMode === 'shooter' ? 'white' : 'black' }}>Qırıcı Oyunu 🚀</button>
       </div>
       
-      {/* OYUN VƏ TEST SAHƏSİ */}
       <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
           <div style={{ position: 'relative', width: '100%', height: '400px', backgroundColor: '#1a202c', borderRadius: '15px', overflow: 'hidden', border: '3px solid #2d3748', marginBottom: '20px' }}>
@@ -132,7 +132,7 @@ export default function TypingApp() {
                <div style={{ color: 'white', paddingTop: '150px' }}><h2>OYUN BİTDİ! ❌</h2><p>Xal: {score}</p></div>
              ) : (
                enemies.map(en => (
-                 <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: 'white', padding: '5px 12px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                 <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: 'white', padding: '5px 12px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)', color: '#1a202c' }}>
                    {en.word}
                  </div>
                ))
@@ -144,9 +144,7 @@ export default function TypingApp() {
               {wordList.join(' ').split('').map((char, index) => {
                 let color = '#cbd5e0';
                 let isCurrent = index === userInput.length;
-                if (index < userInput.length) {
-                  color = userInput[index] === char ? '#38a169' : '#e53e3e';
-                }
+                if (index < userInput.length) color = userInput[index] === char ? '#38a169' : '#e53e3e';
                 return <span key={index} className={isCurrent ? 'active-char' : ''} style={{ color, backgroundColor: isCurrent ? '#ebf8ff' : 'transparent', borderBottom: isCurrent ? '2px solid #3182ce' : 'none' }}>{char}</span>;
               })}
             </div>
@@ -169,11 +167,35 @@ export default function TypingApp() {
       </div>
 
       {testEnded && (
-        <div style={{ marginTop: '20px', padding: '20px', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #3182ce' }}>
+        <div style={{ marginTop: '20px', padding: '20px', background: '#fff', borderRadius: '15px', border: '2px solid #3182ce', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}>
           <h3>Nəticə: {appMode === 'shooter' ? `${score} Xal` : `${correct} wpm`}</h3>
+          {!isSaved ? (
+            <div style={{ marginBottom: '15px' }}>
+              <input 
+                placeholder="Adınızı daxil edin" 
+                value={userName} 
+                onChange={(e) => setUserName(e.target.value)}
+                style={{ padding: '10px', borderRadius: '5px', border: '1px solid #cbd5e0', marginRight: '10px' }}
+              />
+              <button onClick={handleSaveRecord} style={{ padding: '10px 20px', background: '#48bb78', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Rekordu Yadda Saxla</button>
+            </div>
+          ) : <p style={{ color: '#48bb78' }}>✓ Rekordunuz göndərildi!</p>}
           <button onClick={resetTest} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: '5px', border: 'none', background: '#3182ce', color: 'white' }}>Yenidən Başla</button>
         </div>
       )}
+
+      {/* LİDERLƏR CƏDVƏLİ */}
+      <div style={{ marginTop: '40px', background: '#fff', padding: '20px', borderRadius: '15px', border: '1px solid #e2e8f0' }}>
+        <h2 style={{ fontSize: '20px', color: '#2d3748', marginBottom: '15px' }}>🏆 {appMode.toUpperCase()} Rejimi Liderləri</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {liderler.length > 0 ? liderler.map((l, i) => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: i === 0 ? '#fffaf0' : '#f8fafc', borderRadius: '8px', border: i === 0 ? '1px solid #fbd38d' : '1px solid #edf2f7' }}>
+              <span><b>{i+1}.</b> {l.ad}</span>
+              <span style={{ color: '#3182ce', fontWeight: 'bold' }}>{l.xal} {appMode === 'shooter' ? 'Xal' : 'wpm'}</span>
+            </div>
+          )) : <p style={{ color: '#a0aec0' }}>Hələ rekord yoxdur. İlk sən ol!</p>}
+        </div>
+      </div>
     </div>
   )
 }
