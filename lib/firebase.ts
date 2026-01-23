@@ -13,12 +13,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 
-// Rekordu bazaya yazmaq
-export const rekordYaz = async (ad: string, xal: number) => {
-  if (!ad || xal <= 0) return;
+export const rekordYaz = async (ad: string, xal: number, rejim: string) => {
+  if (!ad || xal < 0) return;
   await addDoc(collection(db, "liderler"), {
     ad,
     xal,
+    rejim,
     tarix: new Date()
   });
 };
