@@ -101,9 +101,9 @@ export default function TypingApp() {
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
       <h1>Azərbaycanca Yazma Dünyası 🚀</h1>
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
-        <button onClick={() => setAppMode('easy')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'easy' ? '#48bb78' : '#edf2f7', color: appMode === 'easy' ? 'white' : 'black' }}>Asan Test</button>
-        <button onClick={() => setAppMode('hard')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'hard' ? '#f56565' : '#edf2f7', color: appMode === 'hard' ? 'white' : 'black' }}>Çətin Test</button>
-        <button onClick={() => setAppMode('shooter')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'shooter' ? '#3182ce' : '#edf2f7', color: appMode === 'shooter' ? 'white' : 'black' }}>Qırıcı Oyunu 🚀</button>
+        <button onClick={() => setAppMode('easy')} style={{ padding: '10px 15px', borderRadius: '8px', backgroundColor: appMode === 'easy' ? '#48bb78' : '#edf2f7', color: appMode === 'easy' ? 'white' : 'black', border: 'none', cursor: 'pointer' }}>Asan Test</button>
+        <button onClick={() => setAppMode('hard')} style={{ padding: '10px 15px', borderRadius: '8px', backgroundColor: appMode === 'hard' ? '#f56565' : '#edf2f7', color: appMode === 'hard' ? 'white' : 'black', border: 'none', cursor: 'pointer' }}>Çətin Test</button>
+        <button onClick={() => setAppMode('shooter')} style={{ padding: '10px 15px', borderRadius: '8px', backgroundColor: appMode === 'shooter' ? '#3182ce' : '#edf2f7', color: appMode === 'shooter' ? 'white' : 'black', border: 'none', cursor: 'pointer' }}>Qırıcı Oyunu 🚀</button>
       </div>
       <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
@@ -134,9 +134,9 @@ export default function TypingApp() {
       <input type="text" style={{ width: '100%', padding: '15px', fontSize: '18px', borderRadius: '10px', border: '2px solid #3182ce' }} value={userInput} onChange={handleInput} disabled={testEnded} placeholder="Yazmağa başlayın..." autoFocus />
       <div style={{ marginTop: '15px' }}>Vaxt: <b>{timeLeft}s</b> | {appMode === 'shooter' ? `Xal: ${score}` : `Düz: ${correct}`}</div>
       {testEnded && (
-        <div style={{ marginTop: '20px', padding: '20px', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #3182ce' }}>
+        <div style={{ marginTop: '20px', padding: '20px', background: '#f0f9ff', borderRadius: '10px' }}>
           <h3>Nəticə: {appMode === 'shooter' ? `${score} Xal` : `${correct} wpm`}</h3>
-          <button onClick={resetTest} style={{ padding: '10px 20px', background: '#3182ce', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Yenidən Başla</button>
+          <button onClick={resetTest} style={{ padding: '10px 20px', background: '#3182ce', color: 'white', border: 'none', borderRadius: '5px' }}>Yenidən Başla</button>
         </div>
       )}
     </div>
