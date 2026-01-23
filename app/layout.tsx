@@ -1,6 +1,7 @@
 import "./globals.css";
+import type { Metadata } from "next";
 
-export const metadata = {
+export const metadata: Metadata = {
   title: "Söz Yazma Dünyası",
   description: "Azərbaycanca yazma testi",
 };
@@ -8,9 +9,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="az">
-      <body style={{ margin: 0, backgroundColor: '#f7fafc' }}>
-        {children}
-      </body>
+      <body style={{ margin: 0 }}>{children}</body>
     </html>
   );
 }
