@@ -5,21 +5,16 @@ const EASY_WORDS = ["kitab", "universitet", "düşüncə", "fəaliyyət", "sayt"
 const HARD_WORDS = ["müvəffəqiyyətsizliklərimizdən", "elektroenergetika", "proqramlaşdırılma", "təkmilləşdirilməyən", "istiqamətləndiricilər", "fərdiləşdirilməmiş", "beynəlxalqlaşdırılma", "məsuliyyətsizlik", "xarakterizəolunma", "mərkəzləşdirilməmiş", "sənayeləşdirilmə", "universitetlərarası", "mükəmməlləşdirilmə", "mütəşəkkilləşdirilmiş", "sabitləşdiricilər", "radioteleviziya", "hüquqşünaslıq", "elektromaqnit", "demokratikləşdirilmə", "avtomatlaşdırılma", "konseptuallaşdırma", "mikrobiologiya", "kristallaşdırılma", "transformasiya", "differensiallaşma", "mütəxəssisləşdirilmə", "standartlaşdırılma"];
 
 export default function TypingApp() {
-  // Rejim seçimi: 'easy', 'hard' (Yazma Testi) və ya 'shooter' (Qırıcı Oyunu)
   const [appMode, setAppMode] = useState<'easy' | 'hard' | 'shooter'>('easy');
   const [userInput, setUserInput] = useState('');
   const [wordList, setWordList] = useState<string[]>([]);
   const [timeLeft, setTimeLeft] = useState(60);
   const [isActive, setIsActive] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
-  
-  // Qırıcı Oyunu üçün state-lər
   const [enemies, setEnemies] = useState<{ id: number, word: string, x: number, y: number }[]>([]);
   const [score, setScore] = useState(0);
-  
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Rejim dəyişəndə sıfırla
   useEffect(() => {
     resetTest();
     if (appMode !== 'shooter') {
@@ -37,7 +32,6 @@ export default function TypingApp() {
     setScore(0);
   };
 
-  // Yazma Testi üçün avtomatik sürüşmə
   useEffect(() => {
     if (appMode !== 'shooter' && scrollRef.current) {
       const activeChar = scrollRef.current.querySelector('.active-char') as HTMLElement;
@@ -47,7 +41,6 @@ export default function TypingApp() {
     }
   }, [userInput, appMode]);
 
-  // Taymer və Oyun Logikası
   useEffect(() => {
     let interval: any = null;
     if (isActive && timeLeft > 0 && !testEnded) {
@@ -60,11 +53,9 @@ export default function TypingApp() {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, testEnded]);
 
-  // Qırıcı Oyunu: Düşmənlərin hərəkəti və yaranması
   useEffect(() => {
     let moveInterval: any;
     let spawnInterval: any;
-
     if (appMode === 'shooter' && isActive && !testEnded) {
       moveInterval = setInterval(() => {
         setEnemies(prev => {
@@ -76,7 +67,6 @@ export default function TypingApp() {
           return updated;
         });
       }, 100);
-
       spawnInterval = setInterval(() => {
         setEnemies(prev => [...prev, {
           id: Date.now(),
@@ -86,19 +76,13 @@ export default function TypingApp() {
         }]);
       }, 2000);
     }
-
-    return () => {
-      clearInterval(moveInterval);
-      clearInterval(spawnInterval);
-    };
+    return () => { clearInterval(moveInterval); clearInterval(spawnInterval); };
   }, [appMode, isActive, testEnded]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isActive && !testEnded) setIsActive(true);
     const val = e.target.value;
     setUserInput(val);
-
-    // Qırıcı Oyunu vurma mexanikası
     if (appMode === 'shooter') {
       const hitEnemy = enemies.find(en => en.word === val.trim());
       if (hitEnemy) {
@@ -116,15 +100,11 @@ export default function TypingApp() {
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
       <h1>Azərbaycanca Yazma Dünyası 🚀</h1>
-
-      {/* REJİM SEÇİMİ DÜYMƏLƏRİ */}
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <button onClick={() => setAppMode('easy')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'easy' ? '#48bb78' : '#edf2f7', color: appMode === 'easy' ? 'white' : 'black' }}>Asan Test</button>
         <button onClick={() => setAppMode('hard')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'hard' ? '#f56565' : '#edf2f7', color: appMode === 'hard' ? 'white' : 'black' }}>Çətin Test</button>
         <button onClick={() => setAppMode('shooter')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'shooter' ? '#3182ce' : '#edf2f7', color: appMode === 'shooter' ? 'white' : 'black' }}>Qırıcı Oyunu 🚀</button>
       </div>
-      
-      {/* OYUN VƏ TEST SAHƏSİ */}
       <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
           <div style={{ position: 'relative', width: '100%', height: '400px', backgroundColor: '#1a202c', borderRadius: '15px', overflow: 'hidden', border: '3px solid #2d3748', marginBottom: '20px' }}>
@@ -132,46 +112,31 @@ export default function TypingApp() {
                <div style={{ color: 'white', paddingTop: '150px' }}><h2>OYUN BİTDİ! ❌</h2><p>Xal: {score}</p></div>
              ) : (
                enemies.map(en => (
-                 <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: 'white', padding: '5px 12px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+                 <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: 'white', padding: '5px 12px', borderRadius: '8px', fontWeight: 'bold' }}>
                    {en.word}
                  </div>
                ))
              )}
           </div>
         ) : (
-          <div ref={scrollRef} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '20px', fontSize: '24px', textAlign: 'left', height: '110px', overflow: 'hidden', lineHeight: '1.6' }}>
+          <div ref={scrollRef} style={{ background: '#fff', padding: '20px', borderRadius: '12px', border: '2px solid #e2e8f0', marginBottom: '20px', fontSize: '24px', textAlign: 'left', height: '110px', overflow: 'hidden' }}>
             <div style={{ color: '#cbd5e0' }}>
               {wordList.join(' ').split('').map((char, index) => {
                 let color = '#cbd5e0';
                 let isCurrent = index === userInput.length;
-                if (index < userInput.length) {
-                  color = userInput[index] === char ? '#38a169' : '#e53e3e';
-                }
-                return <span key={index} className={isCurrent ? 'active-char' : ''} style={{ color, backgroundColor: isCurrent ? '#ebf8ff' : 'transparent', borderBottom: isCurrent ? '2px solid #3182ce' : 'none' }}>{char}</span>;
+                if (index < userInput.length) color = userInput[index] === char ? '#38a169' : '#e53e3e';
+                return <span key={index} className={isCurrent ? 'active-char' : ''} style={{ color, borderBottom: isCurrent ? '2px solid #3182ce' : 'none' }}>{char}</span>;
               })}
             </div>
           </div>
         )}
       </div>
-
-      <input
-        type="text"
-        style={{ width: '100%', padding: '15px', fontSize: '18px', borderRadius: '10px', border: '2px solid #3182ce', outline: 'none' }}
-        value={userInput}
-        onChange={handleInput}
-        disabled={testEnded}
-        placeholder={appMode === 'shooter' ? "Sözü yaz və vur!" : "Yazmağa başlayın..."}
-        autoFocus
-      />
-
-      <div style={{ marginTop: '15px', fontSize: '20px' }}>
-        Vaxt: <b>{timeLeft}s</b> | {appMode === 'shooter' ? `Xal: ${score}` : `Düz: ${correct} / Səhv: ${wrong}`}
-      </div>
-
+      <input type="text" style={{ width: '100%', padding: '15px', fontSize: '18px', borderRadius: '10px', border: '2px solid #3182ce' }} value={userInput} onChange={handleInput} disabled={testEnded} placeholder="Yazmağa başlayın..." autoFocus />
+      <div style={{ marginTop: '15px' }}>Vaxt: <b>{timeLeft}s</b> | {appMode === 'shooter' ? `Xal: ${score}` : `Düz: ${correct}`}</div>
       {testEnded && (
         <div style={{ marginTop: '20px', padding: '20px', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #3182ce' }}>
           <h3>Nəticə: {appMode === 'shooter' ? `${score} Xal` : `${correct} wpm`}</h3>
-          <button onClick={resetTest} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: '5px', border: 'none', background: '#3182ce', color: 'white' }}>Yenidən Başla</button>
+          <button onClick={resetTest} style={{ padding: '10px 20px', background: '#3182ce', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Yenidən Başla</button>
         </div>
       )}
     </div>
