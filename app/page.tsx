@@ -12,8 +12,8 @@ export default function TypingApp() {
   const [timeLeft, setTimeLeft] = useState(60);
   const [isActive, setIsActive] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
-
-// Qırıcı Oyunu üçün state-lər
+  
+  // Qırıcı Oyunu üçün state-lər
   const [enemies, setEnemies] = useState<{ id: number, word: string, x: number, y: number }[]>([]);
   const [score, setScore] = useState(0);
   
@@ -25,7 +25,7 @@ export default function TypingApp() {
     if (appMode !== 'shooter') {
       const source = appMode === 'easy' ? EASY_WORDS : HARD_WORDS;
       setWordList([...source].sort(() => Math.random() - 0.5));
-               }
+    }
   }, [appMode]);
 
   const resetTest = () => {
@@ -41,7 +41,7 @@ export default function TypingApp() {
   useEffect(() => {
     if (appMode !== 'shooter' && scrollRef.current) {
       const activeChar = scrollRef.current.querySelector('.active-char') as HTMLElement;
-             if (activeChar) {
+      if (activeChar) {
         scrollRef.current.scrollTop = activeChar.offsetTop - 40;
       }
     }
@@ -65,7 +65,7 @@ export default function TypingApp() {
     let moveInterval: any;
     let spawnInterval: any;
 
-            if (appMode === 'shooter' && isActive && !testEnded) {
+    if (appMode === 'shooter' && isActive && !testEnded) {
       moveInterval = setInterval(() => {
         setEnemies(prev => {
           const updated = prev.map(e => ({ ...e, y: e.y + 1.5 }));
@@ -90,7 +90,7 @@ export default function TypingApp() {
     return () => {
       clearInterval(moveInterval);
       clearInterval(spawnInterval);
-             };
+    };
   }, [appMode, isActive, testEnded]);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,7 +105,7 @@ export default function TypingApp() {
         setEnemies(prev => prev.filter(en => en.id !== hitEnemy.id));
         setScore(s => s + 10);
         setUserInput('');
-                  }
+      }
     }
   };
 
@@ -125,7 +125,7 @@ export default function TypingApp() {
       </div>
       
       {/* OYUN VƏ TEST SAHƏSİ */}
-            <div style={{ position: 'relative' }}>
+      <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
           <div style={{ position: 'relative', width: '100%', height: '400px', backgroundColor: '#1a202c', borderRadius: '15px', overflow: 'hidden', border: '3px solid #2d3748', marginBottom: '20px' }}>
              {testEnded ? (
@@ -135,7 +135,7 @@ export default function TypingApp() {
                  <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: 'white', padding: '5px 12px', borderRadius: '8px', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
                    {en.word}
                  </div>
-                        ))
+               ))
              )}
           </div>
         ) : (
@@ -157,7 +157,7 @@ export default function TypingApp() {
       <input
         type="text"
         style={{ width: '100%', padding: '15px', fontSize: '18px', borderRadius: '10px', border: '2px solid #3182ce', outline: 'none' }}
-               value={userInput}
+        value={userInput}
         onChange={handleInput}
         disabled={testEnded}
         placeholder={appMode === 'shooter' ? "Sözü yaz və vur!" : "Yazmağa başlayın..."}
