@@ -1,15 +1,11 @@
-import React from "react";
+import "./globals.css";
 
 export const metadata = {
-  title: 'Söz Yazma Sürəti Ölçücü',
-  description: 'Azərbaycanca söz yazma sürətinizi ölçün.',
+  title: "Söz Yazma Dünyası",
+  description: "Azərbaycanca yazma testi",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="az">
       <body>{children}</body>
