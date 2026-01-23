@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "SƏNİN_API_KEY",
@@ -10,15 +10,14 @@ const firebaseConfig = {
   appId: "SƏNİN_APP_ID"
 };
 
-// Bu hissə Vercel-də "Firebase App already exists" xətasının qarşısını alır
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 export { db };
 
-export const rekordYaz = async (ad: string, xal: number, rejim: string) => {
+export const rekordYaz = async (ad: string, xal: number, rejim: string): Promise<void> => {
   try {
-    if (!ad || xal < 0) return;
+    if (!ad) return;
     await addDoc(collection(db, "liderler"), {
       ad,
       xal,
