@@ -115,9 +115,9 @@ export default function TypingApp() {
       return "Baş Komandan 👑";
     } else {
       if (correct <= 20) return "Başlanğıc 🐢";
-      if (correct <= 40) return "Orta ⌨️";
-      if (correct <= 60) return "Peşəkar 🚀";
-      if (correct <= 80) return "Ekspert 🔥";
+      if (correct <= 30) return "Orta ⌨️";
+      if (correct <= 40) return "Peşəkar 🚀";
+      if (correct <= 60) return "Ekspert 🔥";
       return "Əfsanəvi 👑";
     }
   };
