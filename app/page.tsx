@@ -5,7 +5,6 @@ const EASY_WORDS = ["kitab", "universitet", "düşüncə", "fəaliyyət", "sayt"
 const HARD_WORDS = ["müvəffəqiyyətsizliklərimizdən", "elektroenergetika", "proqramlaşdırılma", "təkmilləşdirilməyən", "istiqamətləndiricilər", "fərdiləşdirilməmiş", "beynəlxalqlaşdırılma", "məsuliyyətsizlik", "xarakterizəolunma", "mərkəzləşdirilməmiş", "sənayeləşdirilmə", "universitetlərarası", "mükəmməlləşdirilmə", "mütəşəkkilləşdirilmiş", "sabitləşdiricilər", "radioteleviziya", "hüquqşünaslıq", "elektromaqnit", "demokratikləşdirilmə", "avtomatlaşdırılma", "konseptuallaşdırma", "mikrobiologiya", "kristallaşdırılma", "transformasiya", "differensiallaşma", "mütəxəssisləşdirilmə", "standartlaşdırılma"];
 
 export default function TypingApp() {
-  // Rejim seçimi: 'easy', 'hard' (Yazma Testi) və ya 'shooter' (Qırıcı Oyunu)
   const [appMode, setAppMode] = useState<'easy' | 'hard' | 'shooter'>('easy');
   const [userInput, setUserInput] = useState('');
   const [wordList, setWordList] = useState<string[]>([]);
@@ -13,13 +12,11 @@ export default function TypingApp() {
   const [isActive, setIsActive] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
   
-  // Qırıcı Oyunu üçün state-lər
   const [enemies, setEnemies] = useState<{ id: number, word: string, x: number, y: number }[]>([]);
   const [score, setScore] = useState(0);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Rejim dəyişəndə sıfırla
   useEffect(() => {
     resetTest();
     if (appMode !== 'shooter') {
@@ -37,7 +34,6 @@ export default function TypingApp() {
     setScore(0);
   };
 
-  // Yazma Testi üçün avtomatik sürüşmə
   useEffect(() => {
     if (appMode !== 'shooter' && scrollRef.current) {
       const activeChar = scrollRef.current.querySelector('.active-char') as HTMLElement;
@@ -47,7 +43,6 @@ export default function TypingApp() {
     }
   }, [userInput, appMode]);
 
-  // Taymer və Oyun Logikası
   useEffect(() => {
     let interval: any = null;
     if (isActive && timeLeft > 0 && !testEnded) {
@@ -60,7 +55,6 @@ export default function TypingApp() {
     return () => clearInterval(interval);
   }, [isActive, timeLeft, testEnded]);
 
-  // Qırıcı Oyunu: Düşmənlərin hərəkəti və yaranması
   useEffect(() => {
     let moveInterval: any;
     let spawnInterval: any;
@@ -98,7 +92,6 @@ export default function TypingApp() {
     const val = e.target.value;
     setUserInput(val);
 
-    // Qırıcı Oyunu vurma mexanikası
     if (appMode === 'shooter') {
       const hitEnemy = enemies.find(en => en.word === val.trim());
       if (hitEnemy) {
@@ -113,18 +106,32 @@ export default function TypingApp() {
   const correct = appMode === 'shooter' ? score : userWords.filter((w, i) => w === wordList[i]).length;
   const wrong = appMode === 'shooter' ? 0 : userWords.filter((w, i) => w !== "" && w !== wordList[i]).length;
 
+  // Səviyyəni təyin edən funksiya
+  const getStatus = () => {
+    if (appMode === 'shooter') {
+      if (score <= 50) return "Piyada 🛡️";
+      if (score <= 150) return "Snayper 🎯";
+      if (score <= 300) return "Komandir 🎖️";
+      return "Baş Komandan 👑";
+    } else {
+      if (correct <= 20) return "Başlanğıc 🐢";
+      if (correct <= 40) return "Orta ⌨️";
+      if (correct <= 60) return "Peşəkar 🚀";
+      if (correct <= 80) return "Ekspert 🔥";
+      return "Əfsanəvi 👑";
+    }
+  };
+
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto', textAlign: 'center', fontFamily: 'sans-serif' }}>
       <h1>Azərbaycanca Yazma Dünyası 🚀</h1>
 
-      {/* REJİM SEÇİMİ DÜYMƏLƏRİ */}
       <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <button onClick={() => setAppMode('easy')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'easy' ? '#48bb78' : '#edf2f7', color: appMode === 'easy' ? 'white' : 'black' }}>Asan Test</button>
         <button onClick={() => setAppMode('hard')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'hard' ? '#f56565' : '#edf2f7', color: appMode === 'hard' ? 'white' : 'black' }}>Çətin Test</button>
         <button onClick={() => setAppMode('shooter')} style={{ padding: '10px 15px', borderRadius: '8px', border: 'none', cursor: 'pointer', backgroundColor: appMode === 'shooter' ? '#3182ce' : '#edf2f7', color: appMode === 'shooter' ? 'white' : 'black' }}>Qırıcı Oyunu 🚀</button>
       </div>
       
-      {/* OYUN VƏ TEST SAHƏSİ */}
       <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
           <div style={{ position: 'relative', width: '100%', height: '400px', backgroundColor: '#1a202c', borderRadius: '15px', overflow: 'hidden', border: '3px solid #2d3748', marginBottom: '20px' }}>
@@ -169,9 +176,15 @@ export default function TypingApp() {
       </div>
 
       {testEnded && (
-        <div style={{ marginTop: '20px', padding: '20px', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #3182ce' }}>
-          <h3>Nəticə: {appMode === 'shooter' ? `${score} Xal` : `${correct} wpm`}</h3>
-          <button onClick={resetTest} style={{ padding: '10px 20px', cursor: 'pointer', borderRadius: '5px', border: 'none', background: '#3182ce', color: 'white' }}>Yenidən Başla</button>
+        <div style={{ marginTop: '20px', padding: '20px', background: '#f0f9ff', borderRadius: '10px', border: '1px solid #3182ce', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+          <h2 style={{ color: '#2b6cb0', margin: '0 0 10px 0' }}>Test Tamamlandı!</h2>
+          <div style={{ fontSize: '22px', marginBottom: '10px' }}>
+            {appMode === 'shooter' ? `Toplam Xal: ${score}` : `Sürət: ${correct} WPM`}
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#2d3748', marginBottom: '20px' }}>
+            Səviyyəniz: <span style={{ color: '#3182ce' }}>{getStatus()}</span>
+          </div>
+          <button onClick={resetTest} style={{ padding: '12px 25px', cursor: 'pointer', borderRadius: '8px', border: 'none', background: '#3182ce', color: 'white', fontWeight: 'bold', fontSize: '16px' }}>Yenidən Başla</button>
         </div>
       )}
     </div>
