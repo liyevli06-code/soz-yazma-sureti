@@ -13,7 +13,7 @@ export default function TypingApp() {
   const [isActive, setIsActive] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(false); // Dark Mode üçün state
+  const [darkMode, setDarkMode] = useState(false);
   
   const [enemies, setEnemies] = useState<{ id: number, word: string, x: number, y: number }[]>([]);
   const [score, setScore] = useState(0);
@@ -22,12 +22,7 @@ export default function TypingApp() {
 
   useEffect(() => {
     resetTest();
-    let source;
-    if (appMode === 'easy') source = EASY_WORDS;
-    else if (appMode === 'hard') source = HARD_WORDS;
-    else if (appMode === 'code') source = CODE_WORDS;
-    else source = EASY_WORDS;
-
+    let source = appMode === 'hard' ? HARD_WORDS : appMode === 'code' ? CODE_WORDS : EASY_WORDS;
     if (appMode !== 'shooter') {
       setWordList([...source].sort(() => Math.random() - 0.5));
     }
@@ -42,14 +37,32 @@ export default function TypingApp() {
     setScore(0);
   };
 
+  // --- SƏS FUNKSİYALARI ---
   const playClickSound = () => {
     if (soundEnabled) {
       const audio = new Audio('https://www.soundjay.com/communication/typewriter-key-1.mp3');
       audio.volume = 0.1;
-      audio.play().catch(() => {}); // Brauzer bloklamasın deyə catch əlavə edildi
+      audio.play().catch(() => {});
     }
   };
 
+  const playEnergySound = () => {
+    if (soundEnabled) {
+      const audio = new Audio('https://www.soundjay.com/button/button-37.mp3');
+      audio.volume = 0.08;
+      audio.play().catch(() => {});
+    }
+  };
+
+  const playFireSound = () => {
+    if (soundEnabled) {
+      const audio = new Audio('https://www.soundjay.com/mechanical/gun-gunshot-01.mp3');
+      audio.volume = 0.3;
+      audio.play().catch(() => {});
+    }
+  };
+
+  // --- EFFEKTLƏR ---
   useEffect(() => {
     if (appMode !== 'shooter' && scrollRef.current) {
       const activeChar = scrollRef.current.querySelector('.active-char') as HTMLElement;
@@ -78,7 +91,7 @@ export default function TypingApp() {
     if (appMode === 'shooter' && isActive && !testEnded) {
       moveInterval = setInterval(() => {
         setEnemies(prev => {
-          const updated = prev.map(e => ({ ...e, y: e.y + 1.2 })); // Sürət bir az tənzimləndi
+          const updated = prev.map(e => ({ ...e, y: e.y + 1.3 }));
           if (updated.some(e => e.y > 90)) {
             setTestEnded(true);
             setIsActive(false);
@@ -107,148 +120,100 @@ export default function TypingApp() {
     if (!isActive && !testEnded) setIsActive(true);
     const val = e.target.value;
     setUserInput(val);
-    playClickSound();
 
     if (appMode === 'shooter') {
+      playEnergySound(); // Hər hərf yazanda enerji səsi
       const hitEnemy = enemies.find(en => en.word === val.trim());
       if (hitEnemy) {
+        playFireSound(); // Söz bitəndə atəş səsi
         setEnemies(prev => prev.filter(en => en.id !== hitEnemy.id));
         setScore(s => s + 10);
         setUserInput('');
       }
+    } else {
+      playClickSound();
     }
   };
 
   const userWords = userInput.trim().split(/\s+/);
   const correct = appMode === 'shooter' ? score : userWords.filter((w, i) => w === wordList[i]).length;
-  const wrong = appMode === 'shooter' ? 0 : userWords.filter((w, i) => w !== "" && w !== wordList[i]).length;
-  const accuracy = userInput.length > 0 ? Math.round((correct / (correct + (wrong / 5) || 1)) * 100) : 100;
+  const accuracy = userInput.length > 0 ? Math.round((correct / (correct + (userInput.split(' ').length - correct) || 1)) * 100) : 100;
 
   const getStatus = () => {
     if (appMode === 'shooter') {
       if (score <= 50) return "Piyada 🛡️";
       if (score <= 150) return "Snayper 🎯";
-      if (score <= 300) return "Komandir 🎖️";
       return "Baş Komandan 👑";
-    } else {
-      if (correct <= 20) return "Başlanğıc 🐢";
-      if (correct <= 30) return "Orta ⌨️";
-      if (correct <= 40) return "Peşəkar 🚀";
-      if (correct <= 60) return "Ekspert 🔥";
-      return "Əfsanəvi 👑";
     }
+    if (correct <= 20) return "Başlanğıc 🐢";
+    if (correct <= 40) return "Peşəkar 🚀";
+    return "Əfsanəvi 👑";
   };
 
-  // Dinamik rənglər
   const theme = {
-    bg: darkMode ? '#1a202c' : '#f7fafc',
-    card: darkMode ? '#2d3748' : '#ffffff',
-    text: darkMode ? '#f7fafc' : '#2d3748',
-    border: darkMode ? '#4a5568' : '#e2e8f0',
-    inputBg: darkMode ? '#2d3748' : '#fff'
+    bg: darkMode ? '#0f172a' : '#f8fafc',
+    card: darkMode ? '#1e293b' : '#ffffff',
+    text: darkMode ? '#f1f5f9' : '#1e293b',
+    border: darkMode ? '#334155' : '#e2e8f0',
+    input: darkMode ? '#1e293b' : '#fff'
   };
 
   return (
-    <div style={{ 
-      padding: '20px', 
-      maxWidth: '850px', 
-      margin: '0 auto', 
-      textAlign: 'center', 
-      fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif', 
-      backgroundColor: theme.bg, 
-      color: theme.text,
-      minHeight: '100vh', 
-      borderRadius: '20px',
-      transition: 'all 0.3s ease'
-    }}>
+    <div style={{ padding: '20px', maxWidth: '850px', margin: '0 auto', textAlign: 'center', fontFamily: 'Inter, sans-serif', backgroundColor: theme.bg, color: theme.text, minHeight: '100vh', transition: 'all 0.3s ease' }}>
       
-      {/* Header və Ayarlar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '24px', margin: 0 }}>Az Yaz 🚀</h1>
+      {/* Header Bölməsi */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+        <h2 style={{ margin: 0, fontSize: '28px', fontWeight: 800, letterSpacing: '-1px' }}>AZ YAZ <span style={{ color: '#3b82f6' }}>PRO</span></h2>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => setDarkMode(!darkMode)} style={{ padding: '8px 12px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: theme.card, color: theme.text, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-            {darkMode ? "☀️ İşıqlı" : "🌙 Qaranlıq"}
+          <button onClick={() => setDarkMode(!darkMode)} style={{ padding: '10px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: theme.card, color: theme.text, boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+            {darkMode ? '☀️' : '🌙'}
           </button>
-          <button onClick={() => setSoundEnabled(!soundEnabled)} style={{ padding: '8px 12px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: soundEnabled ? '#4299e1' : theme.card, color: soundEnabled ? 'white' : theme.text, boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+          <button onClick={() => setSoundEnabled(!soundEnabled)} style={{ padding: '10px 15px', borderRadius: '12px', border: 'none', cursor: 'pointer', background: soundEnabled ? '#3b82f6' : theme.card, color: soundEnabled ? 'white' : theme.text }}>
             {soundEnabled ? "🔊 Səs" : "🔇 Səs"}
           </button>
         </div>
       </div>
 
-      {/* Rejim Seçimi */}
+      {/* Rejimlər */}
       <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap' }}>
         {(['easy', 'hard', 'code', 'shooter'] as const).map((mode) => (
-          <button 
-            key={mode}
-            onClick={() => setAppMode(mode)} 
-            style={{ 
-              padding: '10px 20px', 
-              borderRadius: '12px', 
-              border: 'none', 
-              cursor: 'pointer', 
-              backgroundColor: appMode === mode ? '#3182ce' : theme.card, 
-              color: appMode === mode ? 'white' : theme.text, 
-              fontWeight: 'bold',
-              transition: 'transform 0.1s',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-            }}
-            onMouseDown={(e) => e.currentTarget.style.transform = 'scale(0.95)'}
-            onMouseUp={(e) => e.currentTarget.style.transform = 'scale(1)'}
-          >
-            {mode === 'easy' && "Asan"}
-            {mode === 'hard' && "Çətin"}
-            {mode === 'code' && "Kod </>"}
-            {mode === 'shooter' && "Qırıcı 🚀"}
+          <button key={mode} onClick={() => setAppMode(mode)} style={{ padding: '12px 24px', borderRadius: '14px', border: 'none', cursor: 'pointer', backgroundColor: appMode === mode ? '#3b82f6' : theme.card, color: appMode === mode ? 'white' : theme.text, fontWeight: 600, transition: '0.2s', transform: appMode === mode ? 'scale(1.05)' : 'scale(1)' }}>
+            {mode.toUpperCase()}
           </button>
         ))}
       </div>
       
-      {/* Timer Progress Bar */}
+      {/* Timer Bar */}
       {isActive && (
-        <div style={{ width: '100%', height: '6px', background: theme.border, borderRadius: '10px', marginBottom: '20px', overflow: 'hidden' }}>
-          <div style={{ width: `${(timeLeft / 60) * 100}%`, height: '100%', background: timeLeft < 10 ? '#f56565' : '#48bb78', transition: 'width 1s linear' }}></div>
+        <div style={{ width: '100%', height: '8px', background: theme.border, borderRadius: '10px', marginBottom: '20px', overflow: 'hidden' }}>
+          <div style={{ width: `${(timeLeft / 60) * 100}%`, height: '100%', background: timeLeft < 10 ? '#ef4444' : '#10b981', transition: 'width 1s linear' }}></div>
         </div>
       )}
 
       <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
-          <div style={{ position: 'relative', width: '100%', height: '400px', backgroundColor: '#0f172a', borderRadius: '20px', overflow: 'hidden', border: '4px solid #1e293b', marginBottom: '20px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)' }}>
+          <div style={{ position: 'relative', width: '100%', height: '420px', backgroundColor: '#020617', borderRadius: '24px', overflow: 'hidden', border: '4px solid #1e293b', marginBottom: '20px', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)' }}>
              {testEnded ? (
-               <div style={{ color: 'white', paddingTop: '150px' }}>
-                 <h2 style={{ fontSize: '32px' }}>OYUN BİTDİ! ❌</h2>
-                 <p style={{ fontSize: '20px' }}>Topladığın xal: {score}</p>
+               <div style={{ color: 'white', paddingTop: '160px' }}>
+                 <h2 style={{ fontSize: '36px' }}>MİSSİYA BİTDİ! 💥</h2>
+                 <p style={{ fontSize: '22px' }}>Xal: {score}</p>
                </div>
              ) : (
                enemies.map(en => (
-                 <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: '#fff', color: '#1a202c', padding: '6px 15px', borderRadius: '10px', fontWeight: 'bold', boxShadow: '0 0 15px rgba(66, 153, 225, 0.5)', transition: 'top 0.1s linear' }}>
+                 <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: '#fff', color: '#0f172a', padding: '8px 18px', borderRadius: '12px', fontWeight: 800, boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)', transition: 'top 0.1s linear' }}>
                    {en.word}
                  </div>
                ))
              )}
           </div>
         ) : (
-          <div ref={scrollRef} style={{ background: theme.card, padding: '30px', borderRadius: '20px', border: `2px solid ${theme.border}`, marginBottom: '25px', fontSize: '28px', textAlign: 'left', height: '140px', overflow: 'hidden', lineHeight: '1.8', boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.05)' }}>
-            <div style={{ color: darkMode ? '#4a5568' : '#cbd5e0', fontWeight: 500 }}>
+          <div ref={scrollRef} style={{ background: theme.card, padding: '35px', borderRadius: '24px', border: `2px solid ${theme.border}`, marginBottom: '25px', fontSize: '30px', textAlign: 'left', height: '150px', overflow: 'hidden', lineHeight: '1.8' }}>
+            <div style={{ color: darkMode ? '#475569' : '#cbd5e0' }}>
               {wordList.join(' ').split('').map((char, index) => {
-                let color = darkMode ? '#4a5568' : '#cbd5e0';
+                let color = darkMode ? '#475569' : '#cbd5e0';
                 let isCurrent = index === userInput.length;
-                let isCorrect = userInput[index] === char;
-                
-                if (index < userInput.length) {
-                  color = isCorrect ? '#48bb78' : '#f56565';
-                }
-                
-                return (
-                  <span key={index} className={isCurrent ? 'active-char' : ''} style={{ 
-                    color, 
-                    backgroundColor: isCurrent ? (darkMode ? '#2c5282' : '#ebf8ff') : 'transparent', 
-                    borderBottom: isCurrent ? '3px solid #4299e1' : 'none',
-                    padding: '0 1px',
-                    transition: 'all 0.1s'
-                  }}>
-                    {char}
-                  </span>
-                );
+                if (index < userInput.length) color = userInput[index] === char ? '#10b981' : '#ef4444';
+                return <span key={index} className={isCurrent ? 'active-char' : ''} style={{ color, backgroundColor: isCurrent ? '#3b82f633' : 'transparent', borderBottom: isCurrent ? '4px solid #3b82f6' : 'none' }}>{char}</span>;
               })}
             </div>
           </div>
@@ -257,18 +222,7 @@ export default function TypingApp() {
 
       <input
         type="text"
-        style={{ 
-          width: '100%', 
-          padding: '20px', 
-          fontSize: '22px', 
-          borderRadius: '15px', 
-          border: `2px solid #4299e1`, 
-          outline: 'none', 
-          backgroundColor: theme.inputBg,
-          color: theme.text,
-          boxShadow: '0 10px 15px -3px rgba(66, 153, 225, 0.1)',
-          transition: 'all 0.2s'
-        }}
+        style={{ width: '100%', padding: '22px', fontSize: '24px', borderRadius: '18px', border: '3px solid #3b82f6', outline: 'none', backgroundColor: theme.input, color: theme.text, boxShadow: '0 10px 15px -3px rgba(59, 130, 246, 0.2)' }}
         value={userInput}
         onChange={handleInput}
         disabled={testEnded}
@@ -276,51 +230,25 @@ export default function TypingApp() {
         autoFocus
       />
 
-      <div style={{ marginTop: '25px', fontSize: '20px', display: 'flex', justifyContent: 'space-around', fontWeight: 'bold' }}>
-        <div>⏱️ <span style={{ color: timeLeft < 10 ? '#f56565' : theme.text }}>{timeLeft}s</span></div>
+      <div style={{ marginTop: '30px', fontSize: '22px', display: 'flex', justifyContent: 'space-around', fontWeight: 700 }}>
+        <div>⏱️ {timeLeft}s</div>
         {appMode === 'shooter' ? <div>🎯 {score}</div> : (
           <>
-            <div style={{ color: '#48bb78' }}>✅ {correct}</div>
-            <div style={{ color: '#4299e1' }}>📈 {accuracy}%</div>
+            <div style={{ color: '#10b981' }}>✅ {correct}</div>
+            <div style={{ color: '#3b82f6' }}>📈 {accuracy}%</div>
           </>
         )}
       </div>
 
       {testEnded && (
-        <div style={{ 
-          marginTop: '30px', 
-          padding: '40px', 
-          background: theme.card, 
-          borderRadius: '25px', 
-          border: '3px solid #4299e1', 
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.2)' 
-        }}>
-          <h2 style={{ color: '#4299e1', marginBottom: '20px', fontSize: '28px' }}>Nəticə ✨</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', textAlign: 'left', maxWidth: '400px', margin: '0 auto 30px auto', fontSize: '18px' }}>
-            <span>Sürət:</span> <b>{appMode === 'shooter' ? `${score} Xal` : `${correct} WPM`}</b>
-            <span>Səhvlər:</span> <b style={{ color: '#f56565' }}>{wrong}</b>
+        <div style={{ marginTop: '30px', padding: '40px', background: theme.card, borderRadius: '28px', border: '3px solid #3b82f6', boxShadow: '0 20px 25px rgba(0,0,0,0.1)' }}>
+          <h2 style={{ color: '#3b82f6', marginBottom: '20px' }}>Nəticə ✨</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', textAlign: 'left', maxWidth: '350px', margin: '0 auto 30px auto' }}>
+            <span>Sürət:</span> <b>{appMode === 'shooter' ? score : correct} {appMode === 'shooter' ? 'Xal' : 'WPM'}</b>
             <span>Dəqiqlik:</span> <b>{accuracy}%</b>
-            <span>Səviyyə:</span> <b style={{ color: '#4299e1' }}>{getStatus()}</b>
+            <span>Səviyyə:</span> <b style={{ color: '#3b82f6' }}>{getStatus()}</b>
           </div>
-          <button 
-            onClick={resetTest} 
-            style={{ 
-              padding: '16px 50px', 
-              cursor: 'pointer', 
-              borderRadius: '15px', 
-              border: 'none', 
-              background: '#4299e1', 
-              color: 'white', 
-              fontWeight: 'bold', 
-              fontSize: '20px', 
-              boxShadow: '0 10px 15px rgba(66, 153, 225, 0.4)',
-              transition: 'transform 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            Yenidən Başla
-          </button>
+          <button onClick={resetTest} style={{ padding: '18px 60px', cursor: 'pointer', borderRadius: '16px', border: 'none', background: '#3b82f6', color: 'white', fontWeight: 700, fontSize: '20px' }}>YENİDƏN BAŞLA</button>
         </div>
       )}
     </div>
