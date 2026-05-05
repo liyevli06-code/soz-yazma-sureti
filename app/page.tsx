@@ -13,27 +13,28 @@ export default function TypingApp() {
   const [isActive, setIsActive] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(true); 
+  const [darkMode, setDarkMode] = useState(true);
   
   const [enemies, setEnemies] = useState<{ id: number, word: string, x: number, y: number }[]>([]);
   const [score, setScore] = useState(0);
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Səsləri internet linkləri ilə useRef vasitəsilə yaradırıq
+  // Səs obyektləri üçün referanslar
   const clickSoundRef = useRef<HTMLAudioElement | null>(null);
   const energySoundRef = useRef<HTMLAudioElement | null>(null);
   const fireSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
-    // İnternet üzərindən səs linkləri
-    clickSoundRef.current = new Audio('https://www.soundjay.com/communication/typewriter-key-1.mp3');
-    energySoundRef.current = new Audio('https://www.soundjay.com/button/button-37.mp3');
-    fireSoundRef.current = new Audio('https://www.soundjay.com/mechanical/gun-gunshot-01.mp3');
-    
-    if(clickSoundRef.current) clickSoundRef.current.volume = 0.1;
-    if(energySoundRef.current) energySoundRef.current.volume = 0.08;
-    if(fireSoundRef.current) fireSoundRef.current.volume = 0.3;
+    // Daha stabil linklərdən istifadə edirik
+    clickSoundRef.current = new Audio('https://actions.google.com/sounds/v1/business/office_typing_single_key.ogg');
+    energySoundRef.current = new Audio('https://actions.google.com/sounds/v1/science_fiction/beep_sci_fi.ogg');
+    fireSoundRef.current = new Audio('https://actions.google.com/sounds/v1/weapons/firearm_shotgun_shot.ogg');
+
+    // Səsləri öncədən yükləyirik
+    if(clickSoundRef.current) { clickSoundRef.current.load(); clickSoundRef.current.volume = 0.1; }
+    if(energySoundRef.current) { energySoundRef.current.load(); energySoundRef.current.volume = 0.05; }
+    if(fireSoundRef.current) { fireSoundRef.current.load(); fireSoundRef.current.volume = 0.2; }
   }, []);
 
   useEffect(() => {
@@ -152,6 +153,7 @@ export default function TypingApp() {
   return (
     <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', fontFamily: '"JetBrains Mono", monospace', backgroundColor: theme.bg, color: theme.text, minHeight: '100vh', transition: 'all 0.3s ease' }}>
       
+      {/* Orijinal Üst Panel */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '10px' }}>
         <h2 style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: '#3b82f6' }}>AZ YAZ <span style={{ color: theme.text }}>V2</span></h2>
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -164,6 +166,7 @@ export default function TypingApp() {
         </div>
       </div>
 
+      {/* Orijinal Rejim Seçimləri */}
       <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
         {(['easy', 'hard', 'code', 'shooter'] as const).map((mode) => (
           <button key={mode} onClick={() => setAppMode(mode)} style={{ padding: '14px 28px', borderRadius: '16px', border: 'none', cursor: 'pointer', backgroundColor: appMode === mode ? '#3b82f6' : theme.card, color: appMode === mode ? 'white' : theme.text, fontWeight: 800, transition: '0.2s', boxShadow: appMode === mode ? '0 0 20px rgba(59, 130, 246, 0.4)' : 'none' }}>
@@ -178,6 +181,7 @@ export default function TypingApp() {
         </div>
       )}
 
+      {/* Oyun Sahəsi (Dəyişilməz Qaldı) */}
       <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
           <div style={{ position: 'relative', width: '100%', height: '450px', backgroundColor: '#020617', borderRadius: '30px', overflow: 'hidden', border: '5px solid #1e293b', marginBottom: '20px', boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.6)' }}>
