@@ -20,17 +20,17 @@ export default function TypingApp() {
   
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Audio Ref-ləri (Səsləri öncədən yükləyirik)
+  // Səsləri internet linkləri ilə useRef vasitəsilə yaradırıq
   const clickSoundRef = useRef<HTMLAudioElement | null>(null);
   const energySoundRef = useRef<HTMLAudioElement | null>(null);
   const fireSoundRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
+    // İnternet üzərindən səs linkləri
     clickSoundRef.current = new Audio('https://www.soundjay.com/communication/typewriter-key-1.mp3');
     energySoundRef.current = new Audio('https://www.soundjay.com/button/button-37.mp3');
     fireSoundRef.current = new Audio('https://www.soundjay.com/mechanical/gun-gunshot-01.mp3');
     
-    // Səs səviyyələrini tənzimləyirik
     if(clickSoundRef.current) clickSoundRef.current.volume = 0.1;
     if(energySoundRef.current) energySoundRef.current.volume = 0.08;
     if(fireSoundRef.current) fireSoundRef.current.volume = 0.3;
@@ -53,7 +53,6 @@ export default function TypingApp() {
     setScore(0);
   };
 
-  // --- SƏS FUNKSİYALARI ---
   const playClickSound = () => {
     if (soundEnabled && clickSoundRef.current) {
       clickSoundRef.current.currentTime = 0;
@@ -75,7 +74,6 @@ export default function TypingApp() {
     }
   };
 
-  // --- OYUN MƏNTİQİ ---
   useEffect(() => {
     let interval: any = null;
     if (isActive && timeLeft > 0 && !testEnded) {
@@ -126,12 +124,10 @@ export default function TypingApp() {
     setUserInput(val);
 
     if (appMode === 'shooter') {
-      // Hər hərf yazanda kiçik lazer/enerji səsi
       playEnergySound(); 
-      
       const hitEnemy = enemies.find(en => en.word === val.trim());
       if (hitEnemy) {
-        playFireSound(); // Söz düzgün olanda atəş səsi
+        playFireSound();
         setEnemies(prev => prev.filter(en => en.id !== hitEnemy.id));
         setScore(s => s + 10);
         setUserInput('');
@@ -154,17 +150,7 @@ export default function TypingApp() {
   };
 
   return (
-    <div style={{ 
-      padding: '20px', 
-      maxWidth: '900px', 
-      margin: '0 auto', 
-      textAlign: 'center', 
-      fontFamily: '"JetBrains Mono", monospace', 
-      backgroundColor: theme.bg, 
-      color: theme.text, 
-      minHeight: '100vh', 
-      transition: 'all 0.3s ease' 
-    }}>
+    <div style={{ padding: '20px', maxWidth: '900px', margin: '0 auto', textAlign: 'center', fontFamily: '"JetBrains Mono", monospace', backgroundColor: theme.bg, color: theme.text, minHeight: '100vh', transition: 'all 0.3s ease' }}>
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '10px' }}>
         <h2 style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: '#3b82f6' }}>AZ YAZ <span style={{ color: theme.text }}>V2</span></h2>
@@ -180,20 +166,7 @@ export default function TypingApp() {
 
       <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
         {(['easy', 'hard', 'code', 'shooter'] as const).map((mode) => (
-          <button 
-            key={mode} 
-            onClick={() => setAppMode(mode)} 
-            style={{ 
-              padding: '14px 28px', 
-              borderRadius: '16px', 
-              border: 'none', 
-              cursor: 'pointer', 
-              backgroundColor: appMode === mode ? '#3b82f6' : theme.card, 
-              color: appMode === mode ? 'white' : theme.text, 
-              fontWeight: 800, 
-              transition: '0.2s',
-              boxShadow: appMode === mode ? '0 0 20px rgba(59, 130, 246, 0.4)' : 'none'
-            }}>
+          <button key={mode} onClick={() => setAppMode(mode)} style={{ padding: '14px 28px', borderRadius: '16px', border: 'none', cursor: 'pointer', backgroundColor: appMode === mode ? '#3b82f6' : theme.card, color: appMode === mode ? 'white' : theme.text, fontWeight: 800, transition: '0.2s', boxShadow: appMode === mode ? '0 0 20px rgba(59, 130, 246, 0.4)' : 'none' }}>
             {mode.toUpperCase()}
           </button>
         ))}
@@ -207,17 +180,7 @@ export default function TypingApp() {
 
       <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
-          <div style={{ 
-            position: 'relative', 
-            width: '100%', 
-            height: '450px', 
-            backgroundColor: '#020617', 
-            borderRadius: '30px', 
-            overflow: 'hidden', 
-            border: '5px solid #1e293b', 
-            marginBottom: '20px', 
-            boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.6)' 
-          }}>
+          <div style={{ position: 'relative', width: '100%', height: '450px', backgroundColor: '#020617', borderRadius: '30px', overflow: 'hidden', border: '5px solid #1e293b', marginBottom: '20px', boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.6)' }}>
              {testEnded ? (
                <div style={{ color: 'white', paddingTop: '180px' }}>
                  <h2 style={{ fontSize: '40px', letterSpacing: '2px' }}>OYUN BİTDİ! 💥</h2>
@@ -226,74 +189,27 @@ export default function TypingApp() {
                </div>
              ) : (
                enemies.map(en => (
-                 <div key={en.id} style={{ 
-                    position: 'absolute', 
-                    top: en.y + '%', 
-                    left: en.x + '%', 
-                    background: '#fff', 
-                    color: '#020617', 
-                    padding: '10px 20px', 
-                    borderRadius: '15px', 
-                    fontWeight: 900, 
-                    boxShadow: '0 0 25px rgba(59, 130, 246, 0.8)', 
-                    transition: 'top 0.1s linear',
-                    fontSize: '18px'
-                  }}>
+                 <div key={en.id} style={{ position: 'absolute', top: en.y + '%', left: en.x + '%', background: '#fff', color: '#020617', padding: '10px 20px', borderRadius: '15px', fontWeight: 900, boxShadow: '0 0 25px rgba(59, 130, 246, 0.8)', transition: 'top 0.1s linear', fontSize: '18px' }}>
                    {en.word}
                  </div>
                ))
              )}
           </div>
         ) : (
-          <div ref={scrollRef} style={{ 
-            background: theme.card, 
-            padding: '40px', 
-            borderRadius: '30px', 
-            border: `3px solid ${theme.border}`, 
-            marginBottom: '30px', 
-            fontSize: '32px', 
-            textAlign: 'left', 
-            height: '160px', 
-            overflow: 'hidden', 
-            lineHeight: '1.8' 
-          }}>
+          <div ref={scrollRef} style={{ background: theme.card, padding: '40px', borderRadius: '30px', border: `3px solid ${theme.border}`, marginBottom: '30px', fontSize: '32px', textAlign: 'left', height: '160px', overflow: 'hidden', lineHeight: '1.8' }}>
             <div style={{ color: darkMode ? '#475569' : '#cbd5e0' }}>
               {wordList.join(' ').split('').map((char, index) => {
                 let color = darkMode ? '#475569' : '#cbd5e0';
                 let isCurrent = index === userInput.length;
                 if (index < userInput.length) color = userInput[index] === char ? '#10b981' : '#ef4444';
-                return <span key={index} className={isCurrent ? 'active-char' : ''} style={{ 
-                  color, 
-                  backgroundColor: isCurrent ? '#3b82f644' : 'transparent', 
-                  borderBottom: isCurrent ? '5px solid #3b82f6' : 'none',
-                  padding: '0 2px'
-                }}>{char}</span>;
+                return <span key={index} className={isCurrent ? 'active-char' : ''} style={{ color, backgroundColor: isCurrent ? '#3b82f644' : 'transparent', borderBottom: isCurrent ? '5px solid #3b82f6' : 'none', padding: '0 2px' }}>{char}</span>;
               })}
             </div>
           </div>
         )}
       </div>
 
-      <input
-        type="text"
-        style={{ 
-          width: '100%', 
-          padding: '25px', 
-          fontSize: '26px', 
-          borderRadius: '20px', 
-          border: '4px solid #3b82f6', 
-          outline: 'none', 
-          backgroundColor: theme.input, 
-          color: theme.text, 
-          boxShadow: '0 15px 30px -5px rgba(59, 130, 246, 0.3)',
-          textAlign: 'center'
-        }}
-        value={userInput}
-        onChange={handleInput}
-        disabled={testEnded}
-        placeholder={appMode === 'shooter' ? "SÖZÜ YAZ VƏ VUR! 💥" : "Yazmağa başla..."}
-        autoFocus
-      />
+      <input type="text" style={{ width: '100%', padding: '25px', fontSize: '26px', borderRadius: '20px', border: '4px solid #3b82f6', outline: 'none', backgroundColor: theme.input, color: theme.text, boxShadow: '0 15px 30px -5px rgba(59, 130, 246, 0.3)', textAlign: 'center' }} value={userInput} onChange={handleInput} disabled={testEnded} placeholder={appMode === 'shooter' ? "SÖZÜ YAZ VƏ VUR! 💥" : "Yazmağa başla..."} autoFocus />
 
       <div style={{ marginTop: '40px', fontSize: '24px', display: 'flex', justifyContent: 'space-around', fontWeight: 800 }}>
         <div>⏱️ {timeLeft}s</div>
