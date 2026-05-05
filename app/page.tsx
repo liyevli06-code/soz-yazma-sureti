@@ -13,12 +13,28 @@ export default function TypingApp() {
   const [isActive, setIsActive] = useState(false);
   const [testEnded, setTestEnded] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(true); // Default olaraq tünd rejim
+  const [darkMode, setDarkMode] = useState(true); 
   
   const [enemies, setEnemies] = useState<{ id: number, word: string, x: number, y: number }[]>([]);
   const [score, setScore] = useState(0);
   
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Audio Ref-ləri (Səsləri öncədən yükləyirik)
+  const clickSoundRef = useRef<HTMLAudioElement | null>(null);
+  const energySoundRef = useRef<HTMLAudioElement | null>(null);
+  const fireSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    clickSoundRef.current = new Audio('https://www.soundjay.com/communication/typewriter-key-1.mp3');
+    energySoundRef.current = new Audio('https://www.soundjay.com/button/button-37.mp3');
+    fireSoundRef.current = new Audio('https://www.soundjay.com/mechanical/gun-gunshot-01.mp3');
+    
+    // Səs səviyyələrini tənzimləyirik
+    if(clickSoundRef.current) clickSoundRef.current.volume = 0.1;
+    if(energySoundRef.current) energySoundRef.current.volume = 0.08;
+    if(fireSoundRef.current) fireSoundRef.current.volume = 0.3;
+  }, []);
 
   useEffect(() => {
     resetTest();
@@ -39,26 +55,23 @@ export default function TypingApp() {
 
   // --- SƏS FUNKSİYALARI ---
   const playClickSound = () => {
-    if (soundEnabled) {
-      const audio = new Audio('https://www.soundjay.com/communication/typewriter-key-1.mp3');
-      audio.volume = 0.1;
-      audio.play().catch(() => {});
+    if (soundEnabled && clickSoundRef.current) {
+      clickSoundRef.current.currentTime = 0;
+      clickSoundRef.current.play().catch(() => {});
     }
   };
 
   const playEnergySound = () => {
-    if (soundEnabled) {
-      const audio = new Audio('https://www.soundjay.com/button/button-37.mp3');
-      audio.volume = 0.08;
-      audio.play().catch(() => {});
+    if (soundEnabled && energySoundRef.current) {
+      energySoundRef.current.currentTime = 0;
+      energySoundRef.current.play().catch(() => {});
     }
   };
 
   const playFireSound = () => {
-    if (soundEnabled) {
-      const audio = new Audio('https://www.soundjay.com/mechanical/gun-gunshot-01.mp3');
-      audio.volume = 0.3;
-      audio.play().catch(() => {});
+    if (soundEnabled && fireSoundRef.current) {
+      fireSoundRef.current.currentTime = 0;
+      fireSoundRef.current.play().catch(() => {});
     }
   };
 
@@ -113,10 +126,12 @@ export default function TypingApp() {
     setUserInput(val);
 
     if (appMode === 'shooter') {
-      playEnergySound(); // Hər hərf yazanda enerji/lazer səsi
+      // Hər hərf yazanda kiçik lazer/enerji səsi
+      playEnergySound(); 
+      
       const hitEnemy = enemies.find(en => en.word === val.trim());
       if (hitEnemy) {
-        playFireSound(); // Söz düzgün yazılanda atəş səsi
+        playFireSound(); // Söz düzgün olanda atəş səsi
         setEnemies(prev => prev.filter(en => en.id !== hitEnemy.id));
         setScore(s => s + 10);
         setUserInput('');
@@ -151,7 +166,6 @@ export default function TypingApp() {
       transition: 'all 0.3s ease' 
     }}>
       
-      {/* Üst Panel */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px', padding: '10px' }}>
         <h2 style={{ margin: 0, fontSize: '32px', fontWeight: 900, color: '#3b82f6' }}>AZ YAZ <span style={{ color: theme.text }}>V2</span></h2>
         <div style={{ display: 'flex', gap: '12px' }}>
@@ -164,7 +178,6 @@ export default function TypingApp() {
         </div>
       </div>
 
-      {/* Rejim Seçimləri */}
       <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap' }}>
         {(['easy', 'hard', 'code', 'shooter'] as const).map((mode) => (
           <button 
@@ -186,14 +199,12 @@ export default function TypingApp() {
         ))}
       </div>
       
-      {/* Progress Bar */}
       {isActive && (
         <div style={{ width: '100%', height: '10px', background: theme.border, borderRadius: '10px', marginBottom: '25px', overflow: 'hidden' }}>
           <div style={{ width: `${(timeLeft / 60) * 100}%`, height: '100%', background: timeLeft < 10 ? '#ef4444' : '#10b981', transition: 'width 1s linear' }}></div>
         </div>
       )}
 
-      {/* Oyun Sahəsi */}
       <div style={{ position: 'relative' }}>
         {appMode === 'shooter' ? (
           <div style={{ 
@@ -263,7 +274,6 @@ export default function TypingApp() {
         )}
       </div>
 
-      {/* Giriş Sahəsi */}
       <input
         type="text"
         style={{ 
@@ -285,7 +295,6 @@ export default function TypingApp() {
         autoFocus
       />
 
-      {/* Statistikalar */}
       <div style={{ marginTop: '40px', fontSize: '24px', display: 'flex', justifyContent: 'space-around', fontWeight: 800 }}>
         <div>⏱️ {timeLeft}s</div>
         {appMode === 'shooter' ? <div>🎯 {score}</div> : (
@@ -296,7 +305,6 @@ export default function TypingApp() {
         )}
       </div>
 
-      {/* Nəticə Ekranı */}
       {testEnded && appMode !== 'shooter' && (
         <div style={{ marginTop: '40px', padding: '50px', background: theme.card, borderRadius: '35px', border: '4px solid #3b82f6', boxShadow: '0 25px 60px rgba(0,0,0,0.3)' }}>
           <h2 style={{ color: '#3b82f6', marginBottom: '25px', fontSize: '32px' }}>MƏŞQ BİTDİ ✨</h2>
